@@ -9,37 +9,44 @@ Power App is a **customization package for ERPNext** that enhances the quotation
 ## Main Features (At a Glance)
 
 ### 1. ✅ Expense Management on Quotations
-- Add expenses to quotations (shipping, installation, etc.)
-- Expenses automatically distributed to items proportionally
-- Apply margin percentage to items
+
+-   Add expenses to quotations (shipping, installation, etc.)
+-   Expenses automatically distributed to items proportionally
+-   Apply margin percentage to items
 
 ### 2. ✅ Service Expense Tracking
-- Track service expenses on Sales Orders
-- Automatically creates Journal Entries when Sales Order is submitted
-- Groups expenses by account for proper accounting
+
+-   Track service expenses on Sales Orders
+-   Automatically creates Journal Entries when Sales Order is submitted
+-   Groups expenses by account for proper accounting
 
 ### 3. ✅ Material Request Creation
-- Create Material Requests directly from Quotations
-- Maintains reference link between documents
+
+-   Create Material Requests directly from Quotations
+-   Maintains reference link between documents
 
 ### 4. ✅ Supplier Quotation Integration
-- Update Customer Quotations with rates from Supplier Quotations
-- Maintains rate consistency (uses base currency)
+
+-   Update Customer Quotations with rates from Supplier Quotations
+-   Maintains rate consistency (uses base currency)
 
 ### 5. ✅ Item Information Display
-- Quick view of item stock, last selling/purchase rates
-- Shows last supplier information
-- Accessible via button on Quotation form
+
+-   Quick view of item stock, last selling/purchase rates
+-   Shows last supplier information
+-   Accessible via button on Quotation form
 
 ### 6. ✅ Service Items Support
-- Special handling for service quotations
-- Filters items to show only non-stock, service items
+
+-   Special handling for service quotations
+-   Filters items to show only non-stock, service items
 
 ---
 
 ## Key Workflows
 
 ### Workflow 1: Quotation with Expenses
+
 ```
 1. Create Quotation
 2. Add Items
@@ -50,6 +57,7 @@ Power App is a **customization package for ERPNext** that enhances the quotation
 ```
 
 ### Workflow 2: Material Request from Quotation
+
 ```
 1. Submit Quotation
 2. Click "Create > Material Request"
@@ -58,6 +66,7 @@ Power App is a **customization package for ERPNext** that enhances the quotation
 ```
 
 ### Workflow 3: Update Quotation from Supplier
+
 ```
 1. Supplier Quotation submitted
 2. System detects linked Customer Quotation
@@ -66,6 +75,7 @@ Power App is a **customization package for ERPNext** that enhances the quotation
 ```
 
 ### Workflow 4: Service Expense Journal Entry
+
 ```
 1. Create Sales Order with service expenses
 2. Submit Sales Order
@@ -97,32 +107,38 @@ Power App is a **customization package for ERPNext** that enhances the quotation
 ## Technical Components
 
 ### Python Files
-- `customization.py` - Main business logic
-- `mapper.py` - Document mapping utilities
-- `overried.py` - Method overrides
+
+-   `customization.py` - Main business logic
+-   `mapper.py` - Document mapping utilities
+-   `overried.py` - Method overrides
 
 ### JavaScript Files
-- `quotation.js` - Quotation form enhancements
-- `supplier_quotation.js` - Supplier Quotation form enhancements
+
+-   `quotation.js` - Quotation form enhancements
+-   `supplier_quotation.js` - Supplier Quotation form enhancements
 
 ### Configuration
-- `hooks.py` - App configuration and event hooks
+
+-   `hooks.py` - App configuration and event hooks
 
 ---
 
 ## Key Calculations
 
 ### Expense Distribution
+
 ```
 Item New Rate = Original Rate + (Item Amount / Total Amount × Total Expenses) / Qty
 ```
 
 ### Margin Application
+
 ```
 Final Rate = Rate × (1 + Margin / 100)
 ```
 
 ### Journal Entry Structure
+
 ```
 Debit: Expense Accounts (grouped)
 Credit: Company Default Service Expense Account
@@ -133,54 +149,62 @@ Credit: Company Default Service Expense Account
 ## Setup Requirements
 
 1. **Company Configuration**
-   - Set `custom_default_service_expense` account in Company master
+
+    - Set `custom_default_service_expense` account in Company master
 
 2. **Service Expense Types**
-   - Create Service Expense Type records
-   - Link to default accounts
+
+    - Create Service Expense Type records
+    - Link to default accounts
 
 3. **Permissions**
-   - Standard ERPNext permissions apply
-   - No special permissions required
+    - Standard ERPNext permissions apply
+    - No special permissions required
 
 ---
 
 ## Common Use Cases
 
 ### Use Case 1: Quotation with Shipping Costs
-- Add items to quotation
-- Add "Shipping" expense (e.g., 100)
-- System distributes 100 across items based on their amounts
-- Items get updated rates
+
+-   Add items to quotation
+-   Add "Shipping" expense (e.g., 100)
+-   System distributes 100 across items based on their amounts
+-   Items get updated rates
 
 ### Use Case 2: Service Project
-- Enable "Services" checkbox
-- Add service items (non-stock)
-- Add service expenses on Sales Order
-- Journal Entry created automatically on submit
+
+-   Enable "Services" checkbox
+-   Add service items (non-stock)
+-   Add service expenses on Sales Order
+-   Journal Entry created automatically on submit
 
 ### Use Case 3: Procurement Workflow
-- Create Customer Quotation
-- Create Material Request from Quotation
-- Send Material Request to suppliers
-- Receive Supplier Quotations
-- Update Customer Quotation with supplier rates
+
+-   Create Customer Quotation
+-   Create Material Request from Quotation
+-   Send Material Request to suppliers
+-   Receive Supplier Quotations
+-   Update Customer Quotation with supplier rates
 
 ---
 
 ## Files to Review
 
 ### For Understanding Business Logic
-- `power_app/customization.py` - Core calculations
-- `power_app/overried.py` - Sales Order creation
+
+-   `power_app/customization.py` - Core calculations
+-   `power_app/overried.py` - Sales Order creation
 
 ### For Understanding Workflows
-- `power_app/public/js/quotation.js` - Quotation UI
-- `power_app/public/js/supplier_quotation.js` - Supplier Quotation UI
+
+-   `power_app/public/js/quotation.js` - Quotation UI
+-   `power_app/public/js/supplier_quotation.js` - Supplier Quotation UI
 
 ### For Understanding Structure
-- `power_app/hooks.py` - App configuration
-- `power_app/mapper.py` - Document mapping
+
+-   `power_app/hooks.py` - App configuration
+-   `power_app/mapper.py` - Document mapping
 
 ---
 
@@ -206,12 +230,11 @@ Credit: Company Default Service Expense Account
 
 ## Documentation Files
 
-- **README.md** - Complete overview and architecture
-- **FUNCTIONALITY_DETAILS.md** - Detailed functionality explanations
-- **API_REFERENCE.md** - API methods and technical reference
-- **QUICK_SUMMARY.md** - This file (quick overview)
+-   **README.md** - Complete overview and architecture
+-   **FUNCTIONALITY_DETAILS.md** - Detailed functionality explanations
+-   **API_REFERENCE.md** - API methods and technical reference
+-   **QUICK_SUMMARY.md** - This file (quick overview)
 
 ---
 
-*For detailed information, refer to the other documentation files in this directory.*
-
+_For detailed information, refer to the other documentation files in this directory._
