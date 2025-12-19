@@ -20,6 +20,7 @@ Each functionality has its own Python file and corresponding JavaScript file (if
 
 -   `get_supplier_quotation_items(quotation_name)` - Get supplier quotation items
 -   `get_material_requests_from_quotation(quotation_name)` - Get material requests
+-   `add_items_from_supplier_quotations(quotation_name, selected_items)` - Add selected items to quotation
 -   `quotation_update(doc, method)` - Document event: Quotation.on_update
 
 ### `item.py`
