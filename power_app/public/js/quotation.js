@@ -460,15 +460,38 @@ function show_item_selection_dialog_content(frm, items) {
 				});
 				return;
 			}
-			// This will be connected to server method in Step 7
-			frappe.msgprint({
-				title: __('Items Selected'),
-				message: __(
-					'Selected ' +
-						selectedItems.length +
-						' item(s). Adding functionality will be enabled in next step.',
-				),
-				indicator: 'blue',
+
+			// Call server method to add items
+			frappe.call({
+				method: 'power_app.quotation.add_items_from_supplier_quotations',
+				args: {
+					quotation_name: frm.doc.name,
+					selected_items: selectedItems,
+				},
+				callback: function (r) {
+					if (r.message) {
+						frappe.show_alert(
+							{
+								message: __('Successfully added {0} item(s) to quotation', [
+									selectedItems.length,
+								]),
+								indicator: 'green',
+							},
+							5,
+						);
+						// Refresh form to show new items
+						frm.reload_doc();
+						// Close dialog
+						d.hide();
+					}
+				},
+				error: function (r) {
+					frappe.msgprint({
+						title: __('Error'),
+						message: __('Failed to add items: ') + (r.message || 'Unknown error'),
+						indicator: 'red',
+					});
+				},
 			});
 		},
 	});
@@ -550,6 +573,9 @@ function get_selected_items_from_dialog(dialog) {
 			supplier_quotation: $checkbox.data('supplier-quotation'),
 			item_code: $checkbox.data('item-code'),
 			rate: parseFloat($checkbox.data('rate')) || 0,
+			qty: parseFloat($checkbox.data('qty')) || 0,
+			uom: $checkbox.data('uom') || '',
+			item_name: $checkbox.data('item-name') || '',
 		});
 	});
 
