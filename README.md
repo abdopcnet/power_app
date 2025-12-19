@@ -1,77 +1,91 @@
 # Power App - Documentation
 
+![Version](https://img.shields.io/badge/version-19.12.2025-blue)
+
+
 ## Overview
 
 Power App is a Frappe/ERPNext customization for intermediary service companies. It extends ERPNext's standard workflow to support:
-- Supplier quotation comparison and item selection
-- Expense allocation to quotation items
-- Material Request workflow from Customer Quotation
+
+-   Supplier quotation comparison and item selection
+-   Expense allocation to quotation items
+-   Material Request workflow from Customer Quotation
 
 ## Code Structure
 
 ### Python Files
 
-| File | Purpose | JavaScript |
-|------|---------|------------|
-| `quotation.py` | Quotation functions | `quotation.js` |
-| `item.py` | Item details | Used by `quotation.js` |
+| File                    | Purpose                      | JavaScript              |
+| ----------------------- | ---------------------------- | ----------------------- |
+| `quotation.py`          | Quotation functions          | `quotation.js`          |
+| `item.py`               | Item details                 | Used by `quotation.js`  |
 | `supplier_quotation.py` | Supplier Quotation functions | `supplier_quotation.js` |
-| `sales_order.py` | Sales Order document events | - |
-| `mapper.py` | Document mapping | Used by `quotation.js` |
+| `sales_order.py`        | Sales Order document events  | -                       |
+| `material_request.py`   | Material Request mapping     | Used by `quotation.js`  |
 
 ### JavaScript Files
 
-| File | Purpose | Python |
-|------|---------|--------|
-| `quotation.js` | Quotation form logic | `quotation.py`, `item.py`, `mapper.py` |
-| `supplier_quotation.js` | Supplier Quotation form logic | `supplier_quotation.py` |
+| File                    | Purpose                       | Python                                           |
+| ----------------------- | ----------------------------- | ------------------------------------------------ |
+| `quotation.js`          | Quotation form logic          | `quotation.py`, `item.py`, `material_request.py` |
+| `supplier_quotation.js` | Supplier Quotation form logic | `supplier_quotation.py`                          |
 
 ## Key Features
 
 ### 1. Supplier Quotation Item Selection
-- Select items from multiple supplier quotations
-- Add selected items to customer quotation
-- Track supplier rates and original rates
+
+-   Select items from multiple supplier quotations
+-   Add selected items to customer quotation
+-   Track supplier rates and original rates
 
 ### 2. Expense Allocation
-- Add expenses to quotations
-- Automatically distribute expenses to items proportionally
-- Calculate final rates with expenses
+
+-   Add expenses to quotations
+-   Automatically distribute expenses to items proportionally
+-   Calculate final rates with expenses
 
 ### 3. Material Request Workflow
-- Create Material Request from Draft Quotation
-- Link Material Request to Quotation
-- Track supplier quotations via Material Request
+
+-   Create Material Request from Draft Quotation
+-   Link Material Request to Quotation
+-   Track supplier quotations via Material Request
 
 ### 4. Supplier Quotation Comparison
-- Open comparison report from Quotation
-- Filter by Material Request/RFQ
-- Select Material Request if multiple exist
+
+-   Open comparison report from Quotation
+-   Filter by Material Request/RFQ
+-   Select Material Request if multiple exist
 
 ## Document Events
 
 ### Quotation
-- `on_update`: Calculate expense allocation and item rates (`quotation.py::quotation_update`)
+
+-   `on_update`: Calculate expense allocation and item rates (`quotation.py::quotation_update`)
 
 ### Sales Order
-- `before_save`: Copy quotation expenses to sales order (`sales_order.py::copy_quotation_expenses_to_sales_order`)
-- `on_submit`: Create journal entry for service expenses (`sales_order.py::create_je_from_service_expence`)
+
+-   `before_save`: Copy quotation expenses to sales order (`sales_order.py::copy_quotation_expenses_to_sales_order`)
+-   `on_submit`: Create journal entry for service expenses (`sales_order.py::create_je_from_service_expence`)
 
 ## API Methods
 
 ### Quotation
-- `power_app.quotation.get_supplier_quotation_items(quotation_name)` - Get supplier quotation items
-- `power_app.quotation.get_material_requests_from_quotation(quotation_name)` - Get material requests
+
+-   `power_app.quotation.get_supplier_quotation_items(quotation_name)` - Get supplier quotation items
+-   `power_app.quotation.get_material_requests_from_quotation(quotation_name)` - Get material requests
 
 ### Item
-- `power_app.item.get_item_details(item_code)` - Get item stock, rates, supplier
+
+-   `power_app.item.get_item_details(item_code)` - Get item stock, rates, supplier
 
 ### Supplier Quotation
-- `power_app.supplier_quotation.check_quotation_linked(doc)` - Check if linked to quotation
-- `power_app.supplier_quotation.update_quotation_linked(doc, q)` - Update quotation with items
+
+-   `power_app.supplier_quotation.check_quotation_linked(doc)` - Check if linked to quotation
+-   `power_app.supplier_quotation.update_quotation_linked(doc, q)` - Update quotation with items
 
 ### Mapper
-- `power_app.mapper.make_material_request_from_quotation(source, target)` - Create Material Request
+
+-   `power_app.material_request.make_material_request_from_quotation(source, target)` - Create Material Request
 
 ## Workflow
 
@@ -104,7 +118,6 @@ Sales Order → Delivery Note → Sales Invoice
 
 ## Notes
 
-- No method overrides - uses document events to preserve ERPNext's original logic
-- All code organized by functionality (one file per DocType/feature)
-- Python and JavaScript files have matching names where applicable
-
+-   No method overrides - uses document events to preserve ERPNext's original logic
+-   All code organized by functionality (one file per DocType/feature)
+-   Python and JavaScript files have matching names where applicable
