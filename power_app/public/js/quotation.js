@@ -17,6 +17,8 @@ frappe.ui.form.on('Quotation', {
 		}
 		add_show_item_history_button(frm);
 		make_MR(frm);
+		add_compare_supplier_quotations_button(frm);
+		add_select_items_from_supplier_quotations_button(frm);
 		frm.trigger('set_item_query');
 		// Set query for a Link field in the child table named 'items' for a service new featur on the quotation doctype
 	},
@@ -200,9 +202,11 @@ function build_item_details_html(item_details, currency) {
 }
 
 function make_MR(frm) {
-	if (frm.doc.docstatus === 1) {
+	// Allow creating Material Request from Draft Quotation
+	// This is needed for the workflow: Draft Quotation → Material Request → RFQ → Supplier Quotations
+	if (frm.doc.docstatus === 0 && !frm.is_new()) {
 		frm.add_custom_button(
-			__('Material Requst'),
+			__('Material Request'),
 			function () {
 				frappe.model.open_mapped_doc({
 					method: 'power_app.mapper.make_material_request_from_quotation',
@@ -213,4 +217,396 @@ function make_MR(frm) {
 			__('Create'),
 		);
 	}
+}
+
+// Function to add "Compare Supplier Quotations" button
+function add_compare_supplier_quotations_button(frm) {
+	// Show button when quotation is in Draft status
+	if (frm.doc.docstatus === 0 && !frm.is_new()) {
+		frm.add_custom_button(
+			__('Compare Supplier Quotations'),
+			function () {
+				// Get Material Requests linked to this Quotation
+				frappe.call({
+					method: 'power_app.customization.get_material_requests_from_quotation',
+					args: {
+						quotation_name: frm.doc.name,
+					},
+					callback: function (r) {
+						if (r.message && r.message.length > 0) {
+							// If multiple Material Requests, show selection dialog
+							if (r.message.length > 1) {
+								show_material_request_selection_dialog(frm, r.message);
+							} else {
+								// Single Material Request, open report directly
+								const mr_data = r.message[0];
+								open_supplier_quotation_comparison(frm, mr_data);
+							}
+						} else {
+							// No Material Request found, open report without filter
+							const reportUrl = build_supplier_quotation_comparison_url(
+								frm.doc.company,
+								null,
+							);
+							window.open(reportUrl, '_blank');
+							frappe.show_alert(
+								{
+									message: __(
+										'No Material Request found. Opening report without filter.',
+									),
+									indicator: 'orange',
+								},
+								5,
+							);
+						}
+					},
+					error: function (r) {
+						// On error, open report without filter
+						const reportUrl = build_supplier_quotation_comparison_url(
+							frm.doc.company,
+							null,
+						);
+						window.open(reportUrl, '_blank');
+					},
+				});
+			},
+			__('Tools'),
+		);
+	}
+}
+
+// Function to show Material Request selection dialog
+function show_material_request_selection_dialog(frm, mr_list) {
+	// Build options for Material Request selection
+	const options = mr_list.map((mr) => {
+		const label = `${mr.material_request} - ${frappe.datetime.str_to_user(
+			mr.transaction_date,
+		)} (${mr.status})`;
+		return { label: label, value: mr.material_request, rfq_name: mr.rfq_name };
+	});
+
+	// Create dialog
+	const d = new frappe.ui.Dialog({
+		title: __('Select Material Request'),
+		fields: [
+			{
+				fieldtype: 'HTML',
+				fieldname: 'message',
+				options: `<p>${__(
+					'Please select which Material Request you want to display supplier quotation comparison for',
+				)}</p>`,
+			},
+			{
+				fieldtype: 'Select',
+				fieldname: 'material_request',
+				label: __('Material Request'),
+				options: options.map((opt) => opt.label).join('\n'),
+				reqd: 1,
+			},
+		],
+		primary_action_label: __('Open Report'),
+		primary_action: function () {
+			const values = d.get_values();
+			if (values && values.material_request) {
+				// Find selected Material Request data
+				const selectedMr = mr_list.find(
+					(mr) => mr.material_request === values.material_request,
+				);
+				if (selectedMr) {
+					open_supplier_quotation_comparison(frm, selectedMr);
+					d.hide();
+				}
+			}
+		},
+	});
+
+	d.show();
+}
+
+// Function to open Supplier Quotation Comparison report
+function open_supplier_quotation_comparison(frm, mr_data) {
+	if (mr_data.rfq_name) {
+		// Build report URL with RFQ filter
+		const reportUrl = build_supplier_quotation_comparison_url(
+			frm.doc.company,
+			mr_data.rfq_name,
+		);
+		window.open(reportUrl, '_blank');
+	} else {
+		// No RFQ found for this Material Request
+		const reportUrl = build_supplier_quotation_comparison_url(frm.doc.company, null);
+		window.open(reportUrl, '_blank');
+		frappe.show_alert(
+			{
+				message: __(
+					'No Request for Quotation found for selected Material Request. Opening report without filter.',
+				),
+				indicator: 'orange',
+			},
+			5,
+		);
+	}
+}
+
+// Function to build Supplier Quotation Comparison report URL
+function build_supplier_quotation_comparison_url(company, rfq_name) {
+	// Get date range (last 30 days to today)
+	const today = frappe.datetime.get_today();
+	const fromDate = frappe.datetime.add_months(today, -1);
+
+	// Base URL
+	let url = '/app/query-report/Supplier%20Quotation%20Comparison?';
+
+	// Add filters
+	url += `company=${encodeURIComponent(company)}`;
+	url += `&from_date=${fromDate}`;
+	url += `&to_date=${today}`;
+	url += `&categorize_by=${encodeURIComponent('Categorize by Supplier')}`;
+
+	// Add RFQ filter if provided
+	if (rfq_name) {
+		url += `&request_for_quotation=${encodeURIComponent(rfq_name)}`;
+	}
+
+	return url;
+}
+
+// Function to add "Select Items from Supplier Quotations" button
+function add_select_items_from_supplier_quotations_button(frm) {
+	// Show button when quotation is in Draft status
+	if (frm.doc.docstatus === 0 && !frm.is_new()) {
+		frm.add_custom_button(
+			__('Select Items from Supplier Quotations'),
+			function () {
+				show_item_selection_dialog(frm);
+			},
+			__('Tools'),
+		);
+	}
+}
+
+// Function to show item selection dialog (Step 4 - UI only, display items)
+function show_item_selection_dialog(frm) {
+	// Show loading message
+	frappe.show_alert(
+		{ message: __('Fetching supplier quotation items...'), indicator: 'blue' },
+		3,
+	);
+
+	// Call server method to get supplier quotation items
+	frappe.call({
+		method: 'power_app.customization.get_supplier_quotation_items',
+		args: {
+			quotation_name: frm.doc.name,
+		},
+		callback: function (r) {
+			if (r.message && r.message.length > 0) {
+				show_item_selection_dialog_content(frm, r.message);
+			} else {
+				frappe.msgprint({
+					title: __('No Items Found'),
+					message: __(
+						'No supplier quotation items found. Please create Material Request and Supplier Quotations first.',
+					),
+					indicator: 'orange',
+				});
+			}
+		},
+		error: function (r) {
+			frappe.msgprint({
+				title: __('Error'),
+				message:
+					__('Failed to fetch supplier quotation items: ') +
+					(r.message || 'Unknown error'),
+				indicator: 'red',
+			});
+		},
+	});
+}
+
+// Function to display items in dialog (Step 5 - with multi-select enabled)
+function show_item_selection_dialog_content(frm, items) {
+	// Build HTML table for items
+	let html = build_supplier_items_table_html(items, frm.doc.currency);
+
+	// Create dialog
+	const d = new frappe.ui.Dialog({
+		title: __('Select Items from Supplier Quotations'),
+		fields: [
+			{
+				fieldtype: 'HTML',
+				fieldname: 'items_table_html',
+				options: html,
+			},
+		],
+		primary_action_label: __('Add Selected Items'),
+		primary_action: function () {
+			// Get selected items
+			const selectedItems = get_selected_items_from_dialog(d);
+			if (selectedItems.length === 0) {
+				frappe.msgprint({
+					title: __('No Items Selected'),
+					message: __('Please select at least one item to add.'),
+					indicator: 'orange',
+				});
+				return;
+			}
+			// This will be connected to server method in Step 7
+			frappe.msgprint({
+				title: __('Items Selected'),
+				message: __(
+					'Selected ' +
+						selectedItems.length +
+						' item(s). Adding functionality will be enabled in next step.',
+				),
+				indicator: 'blue',
+			});
+		},
+	});
+
+	// Enable checkboxes and add select all functionality
+	setup_item_selection_checkboxes(d, items.length);
+
+	d.show();
+}
+
+// Function to setup checkboxes and select all functionality (Step 5)
+function setup_item_selection_checkboxes(dialog, totalItems) {
+	// Wait for dialog to be fully rendered
+	setTimeout(() => {
+		// Enable all checkboxes
+		const checkboxes = dialog.$wrapper.find('.item-select-checkbox');
+		checkboxes.prop('disabled', false);
+
+		// Add select all / deselect all button
+		const selectAllHtml = `
+			<div style="margin-bottom: 10px;">
+				<button type="button" class="btn btn-sm btn-secondary" id="select-all-items-btn">
+					${__('Select All')}
+				</button>
+				<button type="button" class="btn btn-sm btn-secondary" id="deselect-all-items-btn" style="margin-left: 5px;">
+					${__('Deselect All')}
+				</button>
+				<span id="selected-count" style="margin-left: 15px; font-weight: bold; color: #1c5cab;">
+					${__('0 items selected')}
+				</span>
+			</div>
+		`;
+
+		// Insert select all buttons before the table
+		dialog.$wrapper.find('.form-section').first().before(selectAllHtml);
+
+		// Handle select all button
+		dialog.$wrapper.find('#select-all-items-btn').on('click', function () {
+			checkboxes.prop('checked', true);
+			update_selected_count(dialog);
+		});
+
+		// Handle deselect all button
+		dialog.$wrapper.find('#deselect-all-items-btn').on('click', function () {
+			checkboxes.prop('checked', false);
+			update_selected_count(dialog);
+		});
+
+		// Handle individual checkbox changes
+		checkboxes.on('change', function () {
+			update_selected_count(dialog);
+		});
+
+		// Initial count update
+		update_selected_count(dialog);
+	}, 100);
+}
+
+// Function to update selected items count (Step 5)
+function update_selected_count(dialog) {
+	const checked = dialog.$wrapper.find('.item-select-checkbox:checked').length;
+	const total = dialog.$wrapper.find('.item-select-checkbox').length;
+	const countElement = dialog.$wrapper.find('#selected-count');
+
+	if (countElement.length) {
+		countElement.text(`${checked} ${__('of')} ${total} ${__('items selected')}`);
+	}
+}
+
+// Function to get selected items from dialog (Step 5)
+function get_selected_items_from_dialog(dialog) {
+	const selectedItems = [];
+	const checkedBoxes = dialog.$wrapper.find('.item-select-checkbox:checked');
+
+	checkedBoxes.each(function () {
+		const $checkbox = $(this);
+		selectedItems.push({
+			item_id: $checkbox.data('item-id'),
+			supplier_quotation: $checkbox.data('supplier-quotation'),
+			item_code: $checkbox.data('item-code'),
+			rate: parseFloat($checkbox.data('rate')) || 0,
+		});
+	});
+
+	return selectedItems;
+}
+
+// Function to build HTML table for supplier items
+function build_supplier_items_table_html(items, currency) {
+	let html = `
+		<div class="form-section card-section" style="margin-top:0">
+			<table class="table table-bordered table-hover">
+				<thead style="color: #1c5cab;">
+					<tr>
+						<th style="width:5%;">${__('Select')}</th>
+						<th style="width:15%;">${__('Item Code')}</th>
+						<th style="width:20%;">${__('Item Name')}</th>
+						<th style="width:15%;">${__('Supplier')}</th>
+						<th style="width:15%;">${__('Supplier Quotation')}</th>
+						<th style="width:10%;">${__('Qty')}</th>
+						<th style="width:10%;">${__('UOM')}</th>
+						<th style="width:10%;">${__('Rate')}</th>
+					</tr>
+				</thead>
+				<tbody>
+	`;
+
+	items.forEach((item) => {
+		const rate_formatted = frappe.format(item.rate, {
+			fieldtype: 'Currency',
+			options: currency,
+		});
+
+		html += `
+			<tr>
+				<td>
+					<input type="checkbox" class="item-select-checkbox" data-item-id="${item.name}"
+						data-supplier-quotation="${item.supplier_quotation}"
+						data-item-code="${item.item_code}"
+						data-rate="${item.rate}"
+						data-qty="${item.qty || 0}"
+						data-uom="${item.uom || ''}"
+						data-item-name="${item.item_name || ''}"
+						data-supplier="${item.supplier || ''}"
+						data-supplier-name="${item.supplier_name || ''}">
+				</td>
+				<td><a href="/app/item/${item.item_code}" target="_blank">${item.item_code || ''}</a></td>
+				<td>${item.item_name || ''}</td>
+				<td>${item.supplier_name || item.supplier || ''}</td>
+				<td><a href="/app/supplier-quotation/${item.supplier_quotation}" target="_blank">${
+			item.supplier_quotation || ''
+		}</a></td>
+				<td>${item.qty || 0}</td>
+				<td>${item.uom || ''}</td>
+				<td>${rate_formatted}</td>
+			</tr>
+		`;
+	});
+
+	html += `
+				</tbody>
+			</table>
+		</div>
+		<p><strong>${__('Note:')}</strong> ${__(
+		'Select items from the table below. Adding items to quotation will be enabled in next step.',
+	)}</p>
+	`;
+
+	return html;
 }
