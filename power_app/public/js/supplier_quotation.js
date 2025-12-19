@@ -2,7 +2,7 @@ frappe.ui.form.on('Supplier Quotation', {
   refresh(frm) {
     if (!frm.is_new()) {
         frappe.call({
-            method: "power_app.customization.check_quotation_linked",
+            method: "power_app.supplier_quotation.check_quotation_linked",
             args: {
                 doc: frm.doc.name, 
             },
@@ -29,7 +29,7 @@ function update_quotation(frm , q){
                         //     "Quotation": sq
                         // };
                         frappe.call({
-                            method: "power_app.customization.update_quotation_linked",
+                            method: "power_app.supplier_quotation.update_quotation_linked",
                             args: {
                                 doc: frm.doc.name, 
                                 q : q,
