@@ -2,7 +2,6 @@
 
 ![Version](https://img.shields.io/badge/version-19.12.2025-blue)
 
-
 ## Overview
 
 Power App is a Frappe/ERPNext customization for intermediary service companies. It extends ERPNext's standard workflow to support:
@@ -60,7 +59,7 @@ Power App is a Frappe/ERPNext customization for intermediary service companies. 
 
 ### Quotation
 
--   `on_update`: Calculate expense allocation and item rates (`quotation.py::quotation_update`)
+-   `validate`: Calculate expense allocation and item rates (`quotation.py::quotation_validate`)
 
 ### Sales Order
 
