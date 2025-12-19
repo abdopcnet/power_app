@@ -44,10 +44,10 @@ app_license = "mit"
 
 # include js in doctype views
 doctype_js = {
-	"Quotation" : "public/js/quotation.js",
-	"Supplier Quotation" : "public/js/supplier_quotation.js",
-	
-	}
+    "Quotation": "public/js/quotation.js",
+    "Supplier Quotation": "public/js/supplier_quotation.js",
+
+}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -142,16 +142,17 @@ doctype_js = {
 # Hook on document methods and events
 
 doc_events = {
-	"Quotation": {
-		"on_update": "power_app.customization.quotation_update",
-		# "on_cancel": "method",
-		# "on_trash": "method"
-	},
-	"Sales Order": {
-		"on_submit": "power_app.customization.create_je_from_service_expence",
-		# "on_cancel": "method",
-		# "on_trash": "method"
-	}
+    "Quotation": {
+        "on_update": "power_app.quotation.quotation_update",
+        # "on_cancel": "method",
+        # "on_trash": "method"
+    },
+    "Sales Order": {
+        "before_save": "power_app.sales_order.copy_quotation_expenses_to_sales_order",
+        "on_submit": "power_app.sales_order.create_je_from_service_expence",
+        # "on_cancel": "method",
+        # "on_trash": "method"
+    }
 }
 
 # Scheduled Tasks
@@ -183,9 +184,11 @@ doc_events = {
 # Overriding Methods
 # ------------------------------
 #
-override_whitelisted_methods = {
-	"erpnext.selling.doctype.quotation.quotation.make_sales_order": "power_app.overried.make_sales_order"
-}
+# Removed override - using document events instead to extend functionality
+# This preserves ERPNext's original logic while adding custom features
+# override_whitelisted_methods = {
+# 	"erpnext.selling.doctype.quotation.quotation.make_sales_order": "power_app.overried.make_sales_order"
+# }
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
@@ -250,4 +253,3 @@ override_whitelisted_methods = {
 # default_log_clearing_doctypes = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
-
