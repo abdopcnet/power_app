@@ -143,7 +143,8 @@ def add_items_from_supplier_quotations(quotation_name, selected_items):
 
     for item_data in selected_items:
         # Get Supplier Quotation Item details
-        sq_item = frappe.get_doc("Supplier Quotation Item", item_data.get("item_id"))
+        sq_item = frappe.get_doc(
+            "Supplier Quotation Item", item_data.get("item_id"))
 
         # Get item details from Item master
         item_doc = frappe.get_doc("Item", item_data.get("item_code"))
@@ -159,7 +160,8 @@ def add_items_from_supplier_quotations(quotation_name, selected_items):
         supplier_rate = flt(item_data.get("rate")) or flt(sq_item.rate) or 0.0
         item_qty = flt(item_data.get("qty")) or flt(sq_item.qty) or 1.0
         item_uom = item_data.get("uom") or sq_item.uom or item_doc.stock_uom
-        item_name = item_data.get("item_name") or sq_item.item_name or item_doc.item_name
+        item_name = item_data.get(
+            "item_name") or sq_item.item_name or item_doc.item_name
 
         if existing_item:
             # Update existing item: Update rates and custom fields only
@@ -169,8 +171,10 @@ def add_items_from_supplier_quotations(quotation_name, selected_items):
             existing_item.net_amount = supplier_rate * flt(existing_item.qty)
 
             # Update custom fields
-            existing_item.custom_supplier_quotation = item_data.get("supplier_quotation")
-            existing_item.custom_supplier_quotation_item = item_data.get("item_id")
+            existing_item.custom_supplier_quotation = item_data.get(
+                "supplier_quotation")
+            existing_item.custom_supplier_quotation_item = item_data.get(
+                "item_id")
             existing_item.custom_supplier_rate = supplier_rate
             existing_item.custom_original_rate = supplier_rate
 
@@ -211,7 +215,8 @@ def add_items_from_supplier_quotations(quotation_name, selected_items):
     if items_added > 0:
         message_parts.append(_("Added {0} new item(s)").format(items_added))
     if items_updated > 0:
-        message_parts.append(_("Updated {0} existing item(s)").format(items_updated))
+        message_parts.append(
+            _("Updated {0} existing item(s)").format(items_updated))
 
     if message_parts:
         frappe.msgprint(
@@ -227,10 +232,12 @@ def add_items_from_supplier_quotations(quotation_name, selected_items):
     return quotation
 
 
-def quotation_update(doc, method):
+def quotation_validate(doc, method):
     """
-    Document event handler for Quotation on_update
+    Document event handler for Quotation validate
     Handles expense allocation and item rate calculations
+
+    Runs before save to ensure calculated rates are saved with the document
     """
     from frappe.utils import flt
 
