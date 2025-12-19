@@ -50,6 +50,54 @@ mr_list = frappe.call({
 
 ---
 
+#### `add_items_from_supplier_quotations(quotation_name, selected_items)`
+
+Add selected items from supplier quotations to customer quotation.
+
+**Parameters:**
+
+-   `quotation_name` (str): Customer Quotation name
+-   `selected_items` (list): List of selected items with:
+    -   `item_id` (str): Supplier Quotation Item name
+    -   `supplier_quotation` (str): Supplier Quotation name
+    -   `item_code` (str): Item code
+    -   `rate` (float): Item rate
+    -   `qty` (float, optional): Quantity (fetched from SQ Item if not provided)
+    -   `uom` (str, optional): Unit of Measure (fetched from SQ Item if not provided)
+    -   `item_name` (str, optional): Item name (fetched from SQ Item if not provided)
+
+**Returns:**
+
+-   Updated Quotation document
+
+**Example:**
+
+```javascript
+frappe.call({
+    method: 'power_app.quotation.add_items_from_supplier_quotations',
+    args: {
+        quotation_name: 'QUO-00001',
+        selected_items: [
+            {
+                item_id: 'SQ-ITEM-00001',
+                supplier_quotation: 'SQ-00001',
+                item_code: 'ITEM-001',
+                rate: 100.0,
+                qty: 10.0,
+                uom: 'Nos',
+                item_name: 'Item Name'
+            }
+        ]
+    },
+    callback: function(r) {
+        // Refresh form
+        frm.reload_doc();
+    }
+});
+```
+
+---
+
 ### Item Module (`power_app.item`)
 
 #### `get_item_details(item_code)`
