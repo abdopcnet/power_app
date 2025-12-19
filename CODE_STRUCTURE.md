@@ -1,128 +1,68 @@
-# Power App Code Structure
+# Power App - Code Structure
 
 ## Organization Principle
+
 Each functionality has its own Python file and corresponding JavaScript file (if needed).
 
-## File Structure
+## File Mapping
 
-### Python Files (Backend)
+| Python File             | JavaScript File         | Purpose                                   |
+| ----------------------- | ----------------------- | ----------------------------------------- |
+| `quotation.py`          | `quotation.js`          | Quotation functions                       |
+| `item.py`               | -                       | Item details (used by `quotation.js`)     |
+| `supplier_quotation.py` | `supplier_quotation.js` | Supplier Quotation functions              |
+| `sales_order.py`        | -                       | Sales Order document events               |
+| `mapper.py`             | -                       | Document mapping (used by `quotation.js`) |
 
-#### `quotation.py` → `quotation.js`
-**Purpose:** Quotation-related functions
+## Python Functions
 
-**Functions:**
-- `get_supplier_quotation_items()` - Get supplier quotation items linked to customer quotation
-- `get_material_requests_from_quotation()` - Get material requests linked to quotation
-- `quotation_update()` - Document event handler for Quotation on_update
+### `quotation.py`
 
-**Document Events:**
-- `Quotation.on_update` → `quotation_update()`
+-   `get_supplier_quotation_items(quotation_name)` - Get supplier quotation items
+-   `get_material_requests_from_quotation(quotation_name)` - Get material requests
+-   `quotation_update(doc, method)` - Document event: Quotation.on_update
 
----
+### `item.py`
 
-#### `item.py` → `quotation.js` (used by)
-**Purpose:** Item-related functions
+-   `get_item_details(item_code)` - Get item stock, rates, supplier
 
-**Functions:**
-- `get_item_details()` - Get item details (stock, rates, supplier)
+### `supplier_quotation.py`
 
-**Called from:**
-- `quotation.js` - Show Item History button
+-   `check_quotation_linked(doc)` - Check if linked to quotation
+-   `update_quotation_linked(doc, q)` - Update quotation with items
 
----
+### `sales_order.py`
 
-#### `supplier_quotation.py` → `supplier_quotation.js`
-**Purpose:** Supplier Quotation-related functions
+-   `copy_quotation_expenses_to_sales_order(doc, method)` - Document event: Sales Order.before_save
+-   `create_je_from_service_expence(doc, method)` - Document event: Sales Order.on_submit
 
-**Functions:**
-- `check_quotation_linked()` - Check if supplier quotation is linked to customer quotation
-- `update_quotation_linked()` - Update customer quotation with items from supplier quotation
+### `mapper.py`
 
-**Called from:**
-- `supplier_quotation.js` - Update Quotation button
+-   `make_material_request_from_quotation(source, target)` - Create Material Request
 
----
+## JavaScript Functions
 
-#### `sales_order.py` → (Document Events only)
-**Purpose:** Sales Order-related functions
+### `quotation.js`
 
-**Functions:**
-- `copy_quotation_expenses_to_sales_order()` - Copy expenses from quotation to sales order
-- `create_je_from_service_expence()` - Create journal entry on sales order submit
+-   `add_show_item_history_button(frm)` - Show item history
+-   `add_compare_supplier_quotations_button(frm)` - Open comparison report
+-   `add_select_items_from_supplier_quotations_button(frm)` - Select items dialog
+-   `make_MR(frm)` - Create Material Request button
+-   `show_item_selection_dialog(frm)` - Display items dialog
+-   `setup_item_selection_checkboxes(dialog, totalItems)` - Enable multi-select
 
-**Document Events:**
-- `Sales Order.before_save` → `copy_quotation_expenses_to_sales_order()`
-- `Sales Order.on_submit` → `create_je_from_service_expence()`
+### `supplier_quotation.js`
 
----
+-   `update_quotation(frm, q)` - Update quotation button
 
-#### `mapper.py` → `quotation.js` (used by)
-**Purpose:** Document mapping functions
+## Document Events
 
-**Functions:**
-- `make_material_request_from_quotation()` - Create material request from quotation
-
-**Called from:**
-- `quotation.js` - Material Request button
-
----
-
-### JavaScript Files (Frontend)
-
-#### `quotation.js`
-**Purpose:** Quotation form client-side logic
-
-**Functions:**
-- `add_show_item_history_button()` - Show item history dialog
-- `add_compare_supplier_quotations_button()` - Open supplier quotation comparison report
-- `add_select_items_from_supplier_quotations_button()` - Select items from supplier quotations
-- `make_MR()` - Create material request button
-- `show_item_selection_dialog()` - Display supplier quotation items
-- `setup_item_selection_checkboxes()` - Enable multi-select functionality
-
-**Calls:**
-- `power_app.item.get_item_details`
-- `power_app.quotation.get_material_requests_from_quotation`
-- `power_app.quotation.get_supplier_quotation_items`
-- `power_app.mapper.make_material_request_from_quotation`
-
----
-
-#### `supplier_quotation.js`
-**Purpose:** Supplier Quotation form client-side logic
-
-**Functions:**
-- `update_quotation()` - Update customer quotation button
-
-**Calls:**
-- `power_app.supplier_quotation.check_quotation_linked`
-- `power_app.supplier_quotation.update_quotation_linked`
-
----
-
-## Mapping Summary
-
-| Python File | JavaScript File | Relationship |
-|------------|----------------|--------------|
-| `quotation.py` | `quotation.js` | Direct mapping |
-| `item.py` | `quotation.js` | Used by |
-| `supplier_quotation.py` | `supplier_quotation.js` | Direct mapping |
-| `sales_order.py` | - | Document events only |
-| `mapper.py` | `quotation.js` | Used by |
-
----
-
-## Removed Files
-
-- `overried.py` - Removed (was overriding ERPNext's make_sales_order)
-  - **Replaced by:** Document events in `sales_order.py`
-  - **Reason:** To preserve ERPNext's original logic without override
-
----
+-   `Quotation.on_update` → `quotation.quotation_update()`
+-   `Sales Order.before_save` → `sales_order.copy_quotation_expenses_to_sales_order()`
+-   `Sales Order.on_submit` → `sales_order.create_je_from_service_expence()`
 
 ## Notes
 
-1. **No Overrides:** We use document events instead of method overrides to preserve ERPNext's original logic
-2. **One File Per Functionality:** Each major functionality has its own Python and JavaScript files
-3. **Clear Naming:** File names match their primary DocType or functionality
-
+-   No method overrides - uses document events only
+-   One file per functionality
+-   Clear naming convention
