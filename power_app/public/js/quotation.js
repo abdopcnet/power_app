@@ -55,7 +55,7 @@ frappe.ui.form.on('Quotation', {
 function add_show_item_history_button(frm) {
 	// Only show the button if items exist and the form is not new
 	if (frm.doc.items && frm.doc.items.length > 0 && !frm.is_new()) {
-		frm.add_custom_button(
+		frm.page.add_inner_button(
 			__('Show Item History'),
 			async function () {
 				try {
@@ -210,7 +210,7 @@ function make_MR(frm) {
 	// Allow creating Material Request from Draft Quotation
 	// This is needed for the workflow: Draft Quotation → Material Request → RFQ → Supplier Quotations
 	if (frm.doc.docstatus === 0 && !frm.is_new()) {
-		frm.add_custom_button(
+		frm.page.add_inner_button(
 			__('Material Request'),
 			function () {
 				frappe.model.open_mapped_doc({
@@ -229,7 +229,7 @@ function make_MR(frm) {
 function add_compare_supplier_quotations_button(frm) {
 	// Show button when quotation is in Draft status
 	if (frm.doc.docstatus === 0 && !frm.is_new()) {
-		frm.add_custom_button(
+		frm.page.add_inner_button(
 			__('Compare Supplier Quotations'),
 			function () {
 				// Get Material Requests linked to this Quotation
@@ -382,7 +382,7 @@ function build_supplier_quotation_comparison_url(company, rfq_name) {
 function add_select_items_from_supplier_quotations_button(frm) {
 	// Show button when quotation is in Draft status
 	if (frm.doc.docstatus === 0 && !frm.is_new()) {
-		frm.add_custom_button(
+		frm.page.add_inner_button(
 			__('Select Items from Supplier Quotations'),
 			function () {
 				show_item_selection_dialog(frm);
