@@ -55,46 +55,51 @@ frappe.ui.form.on('Quotation', {
 function add_show_item_history_button(frm) {
 	// Only show the button if items exist and the form is not new
 	if (frm.doc.items && frm.doc.items.length > 0 && !frm.is_new()) {
-		frm.add_custom_button(__('Show Item History'), async function () {
-			try {
-				// 1. Get unique items from the current quotation
-				const unique_items = [...new Set(frm.doc.items.map((item) => item.item_code))];
+		frm.add_custom_button(
+			__('Show Item History'),
+			async function () {
+				try {
+					// 1. Get unique items from the current quotation
+					const unique_items = [...new Set(frm.doc.items.map((item) => item.item_code))];
 
-				if (unique_items.length === 0) {
-					frappe.msgprint(__('No items in the current quotation.'));
-					return;
+					if (unique_items.length === 0) {
+						frappe.msgprint(__('No items in the current quotation.'));
+						return;
+					}
+
+					frappe.show_alert(
+						{ message: __('Fetching item details...'), indicator: 'blue' },
+						3,
+					);
+
+					// 2. Fetch the required details for each unique item
+					const item_details = await fetch_item_details(frm, unique_items);
+
+					// 3. Build HTML and show dialog
+					const d = new frappe.ui.Dialog({
+						title: __('Item Price & Stock Details'),
+						fields: [
+							{
+								fieldtype: 'HTML',
+								fieldname: 'item_details_html',
+								options: build_item_details_html(item_details, frm.doc.currency),
+							},
+						],
+						indicator: 'green',
+					});
+					d.show();
+				} catch (e) {
+					console.error('Error fetching item details:', e);
+					frappe.msgprint({
+						title: __('Error'),
+						message: __('Failed to fetch item details: ') + e.message,
+						indicator: 'red',
+					});
 				}
-
-				frappe.show_alert(
-					{ message: __('Fetching item details...'), indicator: 'blue' },
-					3,
-				);
-
-				// 2. Fetch the required details for each unique item
-				const item_details = await fetch_item_details(frm, unique_items);
-
-				// 3. Build HTML and show dialog
-				const d = new frappe.ui.Dialog({
-					title: __('Item Price & Stock Details'),
-					fields: [
-						{
-							fieldtype: 'HTML',
-							fieldname: 'item_details_html',
-							options: build_item_details_html(item_details, frm.doc.currency),
-						},
-					],
-					indicator: 'green',
-				});
-				d.show();
-			} catch (e) {
-				console.error('Error fetching item details:', e);
-				frappe.msgprint({
-					title: __('Error'),
-					message: __('Failed to fetch item details: ') + e.message,
-					indicator: 'red',
-				});
-			}
-		});
+			},
+			null,
+			'info',
+		);
 	}
 }
 // Function to fetch item-specific data
@@ -209,12 +214,13 @@ function make_MR(frm) {
 			__('Material Request'),
 			function () {
 				frappe.model.open_mapped_doc({
-					method: 'power_app.mapper.make_material_request_from_quotation',
+					method: 'power_app.material_request.make_material_request_from_quotation',
 					frm: frm,
 					args: {},
 				});
 			},
 			__('Create'),
+			'primary',
 		);
 	}
 }
@@ -270,7 +276,8 @@ function add_compare_supplier_quotations_button(frm) {
 					},
 				});
 			},
-			__('Tools'),
+			null,
+			'warning',
 		);
 	}
 }
@@ -380,7 +387,8 @@ function add_select_items_from_supplier_quotations_button(frm) {
 			function () {
 				show_item_selection_dialog(frm);
 			},
-			__('Tools'),
+			null,
+			'success',
 		);
 	}
 }
@@ -429,9 +437,10 @@ function show_item_selection_dialog_content(frm, items) {
 	// Build HTML table for items
 	let html = build_supplier_items_table_html(items, frm.doc.currency);
 
-	// Create dialog
+	// Create dialog with wider width
 	const d = new frappe.ui.Dialog({
 		title: __('Select Items from Supplier Quotations'),
+		size: 'extra-large',
 		fields: [
 			{
 				fieldtype: 'HTML',
@@ -550,18 +559,18 @@ function get_selected_items_from_dialog(dialog) {
 // Function to build HTML table for supplier items
 function build_supplier_items_table_html(items, currency) {
 	let html = `
-		<div class="form-section card-section" style="margin-top:0">
-			<table class="table table-bordered table-hover">
+		<div class="form-section card-section" style="margin-top:0; overflow-x: auto;">
+			<table class="table table-bordered table-hover" style="width: 100%; min-width: 900px; table-layout: fixed;">
 				<thead style="color: #1c5cab;">
 					<tr>
-						<th style="width:5%;">${__('Select')}</th>
-						<th style="width:15%;">${__('Item Code')}</th>
-						<th style="width:20%;">${__('Item Name')}</th>
-						<th style="width:15%;">${__('Supplier')}</th>
-						<th style="width:15%;">${__('Supplier Quotation')}</th>
-						<th style="width:10%;">${__('Qty')}</th>
-						<th style="width:10%;">${__('UOM')}</th>
-						<th style="width:10%;">${__('Rate')}</th>
+						<th style="width: 50px; text-align: center;">${__('Select')}</th>
+						<th style="width: 120px;">${__('Item Code')}</th>
+						<th style="width: 200px;">${__('Item Name')}</th>
+						<th style="width: 150px;">${__('Supplier')}</th>
+						<th style="width: 150px;">${__('Supplier Quotation')}</th>
+						<th style="width: 80px; text-align: right;">${__('Qty')}</th>
+						<th style="width: 80px;">${__('UOM')}</th>
+						<th style="width: 120px; text-align: right;">${__('Rate')}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -573,9 +582,15 @@ function build_supplier_items_table_html(items, currency) {
 			options: currency,
 		});
 
+		// Truncate long text to prevent overflow
+		const item_code = (item.item_code || '').substring(0, 20);
+		const item_name = (item.item_name || '').substring(0, 30);
+		const supplier_name = (item.supplier_name || item.supplier || '').substring(0, 25);
+		const sq_name = (item.supplier_quotation || '').substring(0, 20);
+
 		html += `
 			<tr>
-				<td>
+				<td style="text-align: center;">
 					<input type="checkbox" class="item-select-checkbox" data-item-id="${item.name}"
 						data-supplier-quotation="${item.supplier_quotation}"
 						data-item-code="${item.item_code}"
@@ -586,15 +601,25 @@ function build_supplier_items_table_html(items, currency) {
 						data-supplier="${item.supplier || ''}"
 						data-supplier-name="${item.supplier_name || ''}">
 				</td>
-				<td><a href="/app/item/${item.item_code}" target="_blank">${item.item_code || ''}</a></td>
-				<td>${item.item_name || ''}</td>
-				<td>${item.supplier_name || item.supplier || ''}</td>
-				<td><a href="/app/supplier-quotation/${item.supplier_quotation}" target="_blank">${
+				<td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+					<a href="/app/item/${item.item_code}" target="_blank" title="${
+			item.item_code || ''
+		}">${item_code}</a>
+				</td>
+				<td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${
+					item.item_name || ''
+				}">${item_name}</td>
+				<td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${
+					item.supplier_name || item.supplier || ''
+				}">${supplier_name}</td>
+				<td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+					<a href="/app/supplier-quotation/${item.supplier_quotation}" target="_blank" title="${
 			item.supplier_quotation || ''
-		}</a></td>
-				<td>${item.qty || 0}</td>
+		}">${sq_name}</a>
+				</td>
+				<td style="text-align: right;">${item.qty || 0}</td>
 				<td>${item.uom || ''}</td>
-				<td>${rate_formatted}</td>
+				<td style="text-align: right;">${rate_formatted}</td>
 			</tr>
 		`;
 	});
