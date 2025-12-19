@@ -124,7 +124,7 @@ frappe.call({
 
 ---
 
-### Mapper Module (`power_app.mapper`)
+### Material Request Module (`power_app.material_request`)
 
 #### `make_material_request_from_quotation(source, target)`
 
@@ -143,7 +143,7 @@ Create Material Request from Quotation.
 
 ```javascript
 frappe.model.open_mapped_doc({
-	method: 'power_app.mapper.make_material_request_from_quotation',
+	method: 'power_app.material_request.make_material_request_from_quotation',
 	frm: frm,
 });
 ```
