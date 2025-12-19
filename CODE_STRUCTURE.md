@@ -6,13 +6,13 @@ Each functionality has its own Python file and corresponding JavaScript file (if
 
 ## File Mapping
 
-| Python File             | JavaScript File         | Purpose                                   |
-| ----------------------- | ----------------------- | ----------------------------------------- |
-| `quotation.py`          | `quotation.js`          | Quotation functions                       |
-| `item.py`               | -                       | Item details (used by `quotation.js`)     |
-| `supplier_quotation.py` | `supplier_quotation.js` | Supplier Quotation functions              |
-| `sales_order.py`        | -                       | Sales Order document events               |
-| `mapper.py`             | -                       | Document mapping (used by `quotation.js`) |
+| Python File             | JavaScript File         | Purpose                                           |
+| ----------------------- | ----------------------- | ------------------------------------------------- |
+| `quotation.py`          | `quotation.js`          | Quotation functions                               |
+| `item.py`               | -                       | Item details (used by `quotation.js`)             |
+| `supplier_quotation.py` | `supplier_quotation.js` | Supplier Quotation functions                      |
+| `sales_order.py`        | -                       | Sales Order document events                       |
+| `material_request.py`   | -                       | Material Request mapping (used by `quotation.js`) |
 
 ## Python Functions
 
@@ -36,9 +36,9 @@ Each functionality has its own Python file and corresponding JavaScript file (if
 -   `copy_quotation_expenses_to_sales_order(doc, method)` - Document event: Sales Order.before_save
 -   `create_je_from_service_expence(doc, method)` - Document event: Sales Order.on_submit
 
-### `mapper.py`
+### `material_request.py`
 
--   `make_material_request_from_quotation(source, target)` - Create Material Request
+-   `make_material_request_from_quotation(source, target)` - Create Material Request from Quotation
 
 ## JavaScript Functions
 
