@@ -19,7 +19,7 @@ frappe.ui.form.on('Supplier Quotation', {
 
 function update_quotation(frm, q) {
 	if (frm.doc.docstatus === 1) {
-		frm.add_custom_button(
+		frm.page.add_inner_button(
 			__('Update Qutation'),
 			function () {
 				console.log('Quotation');
