@@ -103,7 +103,7 @@ async function fetch_item_details(frm, item_codes) {
 		// --- 1. Get On Hand Quantity (CORRECTED FUNCTION PATH) ---
 		const stock_res = await frappe.call({
 			// *** CHANGE MADE HERE ***
-			method: 'power_app.customization.get_item_details',
+			method: 'power_app.item.get_item_details',
 			args: {
 				item_code: item_code,
 				// warehouse: frm.doc.warehouse || frappe.defaults.get_user_default('default_warehouse'),
@@ -228,7 +228,7 @@ function add_compare_supplier_quotations_button(frm) {
 			function () {
 				// Get Material Requests linked to this Quotation
 				frappe.call({
-					method: 'power_app.customization.get_material_requests_from_quotation',
+					method: 'power_app.quotation.get_material_requests_from_quotation',
 					args: {
 						quotation_name: frm.doc.name,
 					},
@@ -395,7 +395,7 @@ function show_item_selection_dialog(frm) {
 
 	// Call server method to get supplier quotation items
 	frappe.call({
-		method: 'power_app.customization.get_supplier_quotation_items',
+		method: 'power_app.quotation.get_supplier_quotation_items',
 		args: {
 			quotation_name: frm.doc.name,
 		},
