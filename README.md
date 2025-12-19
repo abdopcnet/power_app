@@ -73,6 +73,7 @@ Power App is a Frappe/ERPNext customization for intermediary service companies. 
 
 -   `power_app.quotation.get_supplier_quotation_items(quotation_name)` - Get supplier quotation items
 -   `power_app.quotation.get_material_requests_from_quotation(quotation_name)` - Get material requests
+-   `power_app.quotation.add_items_from_supplier_quotations(quotation_name, selected_items)` - Add selected items to quotation
 
 ### Item
 
