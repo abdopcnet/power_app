@@ -21,7 +21,7 @@ Each functionality has its own Python file and corresponding JavaScript file (if
 -   `get_supplier_quotation_items(quotation_name)` - Get supplier quotation items
 -   `get_material_requests_from_quotation(quotation_name)` - Get material requests
 -   `add_items_from_supplier_quotations(quotation_name, selected_items)` - Add selected items to quotation
--   `quotation_update(doc, method)` - Document event: Quotation.on_update
+-   `quotation_validate(doc, method)` - Document event: Quotation.validate
 
 ### `item.py`
 
@@ -58,7 +58,7 @@ Each functionality has its own Python file and corresponding JavaScript file (if
 
 ## Document Events
 
--   `Quotation.on_update` → `quotation.quotation_update()`
+-   `Quotation.validate` → `quotation.quotation_validate()`
 -   `Sales Order.before_save` → `sales_order.copy_quotation_expenses_to_sales_order()`
 -   `Sales Order.on_submit` → `sales_order.create_je_from_service_expence()`
 
