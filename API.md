@@ -74,25 +74,25 @@ Add selected items from supplier quotations to customer quotation.
 
 ```javascript
 frappe.call({
-    method: 'power_app.quotation.add_items_from_supplier_quotations',
-    args: {
-        quotation_name: 'QUO-00001',
-        selected_items: [
-            {
-                item_id: 'SQ-ITEM-00001',
-                supplier_quotation: 'SQ-00001',
-                item_code: 'ITEM-001',
-                rate: 100.0,
-                qty: 10.0,
-                uom: 'Nos',
-                item_name: 'Item Name'
-            }
-        ]
-    },
-    callback: function(r) {
-        // Refresh form
-        frm.reload_doc();
-    }
+	method: 'power_app.quotation.add_items_from_supplier_quotations',
+	args: {
+		quotation_name: 'QUO-00001',
+		selected_items: [
+			{
+				item_id: 'SQ-ITEM-00001',
+				supplier_quotation: 'SQ-00001',
+				item_code: 'ITEM-001',
+				rate: 100.0,
+				qty: 10.0,
+				uom: 'Nos',
+				item_name: 'Item Name',
+			},
+		],
+	},
+	callback: function (r) {
+		// Refresh form
+		frm.reload_doc();
+	},
 });
 ```
 
@@ -202,15 +202,17 @@ frappe.model.open_mapped_doc({
 
 ### Quotation Events
 
-#### `on_update`
+#### `validate`
 
-**Handler:** `power_app.quotation.quotation_update`
+**Handler:** `power_app.quotation.quotation_validate`
 
 **Functionality:**
 
 -   Calculates expense allocation to items
 -   Applies item margins
 -   Updates item rates
+
+**Note:** Runs before save to ensure calculated rates are saved with the document
 
 ---
 
