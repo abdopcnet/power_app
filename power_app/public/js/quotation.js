@@ -90,6 +90,62 @@ frappe.ui.form.on('Quotation', {
 	},
 });
 
+// Handle Service Expense table changes - Update rates immediately
+let expense_update_timeout = null;
+let is_recalculating = false;
+
+function trigger_expense_recalculation(frm) {
+	// Skip if already recalculating to avoid recursion
+	if (is_recalculating) {
+		return;
+	}
+
+	// Debounce to avoid multiple saves
+	if (expense_update_timeout) {
+		clearTimeout(expense_update_timeout);
+	}
+
+	expense_update_timeout = setTimeout(() => {
+		if (frm.doc.docstatus === 0 && !frm.is_new()) {
+			is_recalculating = true;
+			console.log('[quotation.js] (Recalculating rates after expense change)');
+			// Save silently to trigger validate event
+			frm.save(undefined, undefined, undefined, true)
+				.then(() => {
+					frm.reload_doc();
+					is_recalculating = false;
+				})
+				.catch(() => {
+					is_recalculating = false;
+				});
+		}
+	}, 500); // Wait 500ms after last change
+}
+
+frappe.ui.form.on('Service Expense', {
+	amount: function (frm, cdt, cdn) {
+		// When amount is changed, trigger recalculation
+		if (frm.doc.docstatus === 0 && !frm.is_new()) {
+			console.log('[quotation.js] (Expense amount changed)');
+			trigger_expense_recalculation(frm);
+		}
+	},
+	custom_quotation_expenses_table_add: function (frm, cdt, cdn) {
+		// When expense row is added, trigger recalculation
+		if (frm.doc.docstatus === 0 && !frm.is_new()) {
+			console.log('[quotation.js] (Expense row added)');
+			trigger_expense_recalculation(frm);
+		}
+	},
+	custom_quotation_expenses_table_remove: function (frm, cdt, cdn) {
+		// When expense row is removed, trigger recalculation
+		if (frm.doc.docstatus === 0 && !frm.is_new()) {
+			console.log('[quotation.js] (Expense row removed)');
+			trigger_expense_recalculation(frm);
+		}
+	},
+});
+
 // Function to add the "Show Item History" button and handle its logic
 function add_show_item_history_button(frm) {
 	// Only show the button if items exist and the form is not new
@@ -97,46 +153,46 @@ function add_show_item_history_button(frm) {
 		frm.page.add_inner_button(
 			__('Show Item History'),
 			async function () {
-			try {
-				// 1. Get unique items from the current quotation
-				const unique_items = [...new Set(frm.doc.items.map((item) => item.item_code))];
+				try {
+					// 1. Get unique items from the current quotation
+					const unique_items = [...new Set(frm.doc.items.map((item) => item.item_code))];
 
-				if (unique_items.length === 0) {
-					frappe.msgprint(__('No items in the current quotation.'));
-					return;
-				}
+					if (unique_items.length === 0) {
+						frappe.msgprint(__('No items in the current quotation.'));
+						return;
+					}
 
-				frappe.show_alert(
-					{ message: __('Fetching item details...'), indicator: 'blue' },
-					3,
-				);
+					frappe.show_alert(
+						{ message: __('Fetching item details...'), indicator: 'blue' },
+						3,
+					);
 
-				// 2. Fetch the required details for each unique item
-				const item_details = await fetch_item_details(frm, unique_items);
+					// 2. Fetch the required details for each unique item
+					const item_details = await fetch_item_details(frm, unique_items);
 
-				// 3. Build HTML and show dialog
-				const d = new frappe.ui.Dialog({
-					title: __('Item Price & Stock Details'),
-					fields: [
-						{
-							fieldtype: 'HTML',
-							fieldname: 'item_details_html',
-							options: build_item_details_html(item_details, frm.doc.currency),
-						},
-					],
-					indicator: 'green',
-				});
-				d.show();
-			} catch (e) {
+					// 3. Build HTML and show dialog
+					const d = new frappe.ui.Dialog({
+						title: __('Item Price & Stock Details'),
+						fields: [
+							{
+								fieldtype: 'HTML',
+								fieldname: 'item_details_html',
+								options: build_item_details_html(item_details, frm.doc.currency),
+							},
+						],
+						indicator: 'green',
+					});
+					d.show();
+				} catch (e) {
 					console.log(
 						`[quotation.js] (Error fetching item details: ${e.message || 'Unknown'})`,
 					);
-				frappe.msgprint({
-					title: __('Error'),
-					message: __('Failed to fetch item details: ') + e.message,
-					indicator: 'red',
-				});
-			}
+					frappe.msgprint({
+						title: __('Error'),
+						message: __('Failed to fetch item details: ') + e.message,
+						indicator: 'red',
+					});
+				}
 			},
 			null,
 			'info',
