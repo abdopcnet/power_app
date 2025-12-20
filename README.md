@@ -183,14 +183,53 @@ Power App is a Frappe/ERPNext customization for intermediary service companies. 
 
 ## Key Benefits
 
-✅ **Expense Management:** Add expenses at Quotation stage (before purchase)
-✅ **Supplier Integration:** Direct item selection from supplier quotations
-✅ **Automated Calculations:** Automatic expense distribution and rate updates
-✅ **Real-time Updates:** Rates recalculate automatically when expenses change
-✅ **Approval Control:** Prevent submission without approval
-✅ **Accounting Integration:** Automatic Journal Entry creation
-✅ **Service Items Support:** Extended Landed Cost Voucher for service items
-✅ **No Method Overrides:** Uses document events to preserve ERPNext logic
+### 💰 Expense Management
+
+-   Add expenses at Quotation stage (before purchase)
+-   Automatic expense distribution to items
+-   Real-time rate recalculation when expenses change
+
+### 🔗 Supplier Integration
+
+-   Direct item selection from supplier quotations
+-   Multi-select items from multiple suppliers
+-   Automatic rate updates from supplier quotations
+
+### ⚙️ Automated Calculations
+
+-   Automatic expense distribution and rate updates
+-   Rate restoration logic (supplier rate → price list rate)
+-   Margin application after expense distribution
+
+### ⚡ Real-time Updates
+
+-   Rates recalculate automatically when expenses change
+-   Debounced auto-save (500ms delay)
+-   No manual save required
+
+### ✅ Approval Control
+
+-   Prevent submission without approval
+-   Submit button visibility controlled by Approved checkbox
+-   Read-only item selection after submission
+
+### 📊 Accounting Integration
+
+-   Automatic Journal Entry creation on Sales Order submit
+-   Expenses recorded in accounting system
+-   No manual Journal Entry creation required
+
+### 🔧 Service Items Support
+
+-   Extended Landed Cost Voucher for service items
+-   Works with Stock Items, Fixed Assets, and Service Items
+-   Safe implementation (doesn't affect stock ledger)
+
+### 🛡️ Code Quality
+
+-   No method overrides (uses document events)
+-   Preserves ERPNext's original logic
+-   Unified logging system across all files
 
 ---
 
