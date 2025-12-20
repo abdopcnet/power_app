@@ -27,6 +27,7 @@ def make_material_request_from_quotation(source, target=None):
 
     # Execute the mapping process
     # Allow mapping from Draft Quotations (docstatus = 0) for intermediary workflow
+    frappe.log_error(f"[material_request.py] make_material_request_from_quotation: Creating MR from {source}")
     doc = get_mapped_doc(
         "Quotation",
         source,
@@ -51,5 +52,6 @@ def make_material_request_from_quotation(source, target=None):
         set_missing_values
     )
 
+    frappe.log_error(f"[material_request.py] make_material_request_from_quotation: Material Request {doc.name} created successfully")
     return doc
 
