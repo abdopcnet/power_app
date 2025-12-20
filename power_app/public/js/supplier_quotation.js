@@ -1,48 +1,48 @@
 frappe.ui.form.on('Supplier Quotation', {
-	refresh(frm) {
-		if (!frm.is_new()) {
-			frappe.call({
+  refresh(frm) {
+    if (!frm.is_new()) {
+        frappe.call({
 				method: 'power_app.supplier_quotation.check_quotation_linked',
-				args: {
-					doc: frm.doc.name,
-				},
-				callback: function (r) {
-					if (r.message) {
-						console.log(r.message);
+            args: {
+                doc: frm.doc.name, 
+            },
+            callback: function (r) {
+                if (r.message) {
+                    console.log(r.message); 
 						update_quotation(frm, r.message);
-					}
-				},
-			});
-		}
-	},
+                } 
+            },
+        });
+    }   
+  },
 });
 
 function update_quotation(frm, q) {
-	if (frm.doc.docstatus === 1) {
+    if (frm.doc.docstatus === 1) {
 		frm.page.add_inner_button(
 			__('Update Qutation'),
-			function () {
+					function () {
 				console.log('Quotation');
 				console.log(q);
-				// frappe.route_options = {
-				//     "Quotation": sq
-				// };
-				frappe.call({
+                        // frappe.route_options = {
+                        //     "Quotation": sq
+                        // };
+                        frappe.call({
 					method: 'power_app.supplier_quotation.update_quotation_linked',
-					args: {
-						doc: frm.doc.name,
+                            args: {
+                                doc: frm.doc.name, 
 						q: q,
-					},
-					callback: function (r) {
-						if (r.message) {
-							console.log(r.message);
-						}
-					},
-				});
+                            },
+                            callback: function (r) {
+                                if (r.message) {
+                                    console.log(r.message); 
+                                } 
+                            },
+                        });
 				frappe.set_route('Form', 'Quotation', q);
-			},
+					},
 			null,
 			'success',
-		);
-	}
+				);
+    }
 }
