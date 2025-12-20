@@ -44,10 +44,8 @@ Power App extends ERPNext's standard sales cycle to support intermediary service
     - Select items using checkboxes
     - Click "Add Selected Items"
     - Items are added/updated in Customer Quotation with:
-        - `custom_supplier_quotation` - Supplier Quotation reference
-        - `custom_supplier_quotation_item` - Supplier Quotation Item reference
-        - `custom_supplier_rate` - Rate from supplier
-        - `custom_original_rate` - Original rate (preserved)
+        - `custom_supplier_quotation_name` - Supplier Quotation number/name
+        - `custom_original_rate` - Original rate (preserved before update)
 
 ### Phase 3: Expense Allocation (Draft Quotation)
 
@@ -191,16 +189,13 @@ Quotation (Submitted)
 
 ### Quotation Item
 
--   `custom_supplier_quotation` (Link) - Supplier Quotation reference
--   `custom_supplier_quotation_item` (Data) - Supplier Quotation Item reference
--   `custom_supplier_rate` (Currency) - Rate from supplier
--   `custom_original_rate` (Currency) - Original rate preserved
+-   `custom_supplier_quotation_name` (Data) - Supplier Quotation number/name
+-   `custom_original_rate` (Currency) - Original rate preserved (before supplier rate update)
 -   `custom_sq_rate` (Currency) - Supplier quotation rate (for calculations)
 -   `custom_sq_net_rate` (Currency) - Supplier quotation net rate
 -   `custom_sq_amount` (Currency) - Supplier quotation amount
 -   `custom_sq_net_amount` (Currency) - Supplier quotation net amount
--   `custom_quotation_item_expense_amount` (Currency) - Expense amount per item
--   `custom_final_rate` (Currency) - Final rate after expenses and margin
+-   `custom_item_expense_amount` (Currency) - Expense amount per item
 
 ### Sales Order
 
