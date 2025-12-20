@@ -227,4 +227,3 @@ Journal Entry submitted automatically
 -   Client-side functions are called from form handlers
 -   All API methods follow unified logging format
 -   No method overrides - only document events and whitelisted methods
--   **Note:** The field `compnay` (typo for `company`) is used in Service Expense DocType JSON and must be kept as-is in code to match the JSON field name
