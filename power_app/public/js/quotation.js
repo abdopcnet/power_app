@@ -219,8 +219,8 @@ function make_MR(frm) {
 					args: {},
 				});
 			},
-			__('Create'),
-			'primary',
+			null, // No group, makes it a standalone button
+			'info', // Light blue color (different from primary)
 		);
 	}
 }
