@@ -224,7 +224,7 @@ frappe.model.open_mapped_doc({
 
 **Functionality:**
 
--   Copies `custom_quotation_expenses` from Quotation to Sales Order
+-   Copies `custom_quotation_expenses_table` from Quotation to Sales Order `custom_sales_order_service_expenses_table`
 
 #### `on_submit`
 
