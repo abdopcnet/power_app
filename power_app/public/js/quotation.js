@@ -63,7 +63,7 @@ frappe.ui.form.on('Quotation', {
 	},
 	set_item_query: function (frm) {
 		frm.set_query('item_code', 'items', function () {
-			console.log('item query ');
+			console.log('[quotation.js] (Item query triggered)');
 			if (frm.doc.custom_services) {
 				return {
 					filters: {
@@ -128,7 +128,9 @@ function add_show_item_history_button(frm) {
 					});
 					d.show();
 				} catch (e) {
-					console.error('Error fetching item details:', e);
+					console.log(
+						`[quotation.js] (Error fetching item details: ${e.message || 'Unknown'})`,
+					);
 					frappe.msgprint({
 						title: __('Error'),
 						message: __('Failed to fetch item details: ') + e.message,
@@ -154,11 +156,7 @@ async function fetch_item_details(frm, item_codes) {
 				// The API often returns stock under the 'actual_qty' key
 			},
 		});
-		console.log(stock_res);
-		console.log(stock_res.stock_qty);
-		console.log(stock_res.message.stock_qty);
-		console.log(stock_res.message.last_selling_rate);
-		console.log(stock_res.message.last_purchase_rate);
+		console.log(`[quotation.js] (Item details fetched: ${item_code})`);
 		// Adjusting how the result is read, as 'get_item_stock' returns an object
 		const stock_qty =
 			stock_res.message && stock_res.message.stock_qty ? stock_res.message.stock_qty : 0;
@@ -462,6 +460,7 @@ function show_item_selection_dialog(frm) {
 		},
 		callback: function (r) {
 			if (r.message && r.message.length > 0) {
+				console.log(`[quotation.js] (Supplier items fetched: ${r.message.length} items)`);
 				show_item_selection_dialog_content(frm, r.message);
 			} else {
 				frappe.msgprint({
@@ -474,6 +473,11 @@ function show_item_selection_dialog(frm) {
 			}
 		},
 		error: function (r) {
+			console.log(
+				`[quotation.js] (Error fetching supplier items readonly: ${
+					r.message || 'Unknown'
+				})`,
+			);
 			frappe.msgprint({
 				title: __('Error'),
 				message:
@@ -564,6 +568,7 @@ function show_item_selection_dialog_content(frm, items) {
 		primary_action: function () {
 			// Get selected items
 			const selectedItems = get_selected_items_from_dialog(d);
+			console.log(`[quotation.js] (Selected items: ${selectedItems.length})`);
 			if (selectedItems.length === 0) {
 				frappe.msgprint({
 					title: __('No Items Selected'),
@@ -582,6 +587,9 @@ function show_item_selection_dialog_content(frm, items) {
 				},
 				callback: function (r) {
 					if (r.message) {
+						console.log(
+							`[quotation.js] (Items added successfully: ${selectedItems.length})`,
+						);
 						frappe.show_alert(
 							{
 								message: __('Successfully added {0} item(s) to quotation', [
@@ -598,6 +606,7 @@ function show_item_selection_dialog_content(frm, items) {
 					}
 				},
 				error: function (r) {
+					console.log(`[quotation.js] (Error adding items: ${r.message || 'Unknown'})`);
 					frappe.msgprint({
 						title: __('Error'),
 						message: __('Failed to add items: ') + (r.message || 'Unknown error'),
