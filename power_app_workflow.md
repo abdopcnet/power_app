@@ -44,7 +44,7 @@ Power App extends ERPNext's standard sales cycle to support intermediary service
     - Select items using checkboxes
     - Click "Add Selected Items"
     - Items are added/updated in Customer Quotation with:
-        - `custom_supplier_quotation_name` - Supplier Quotation number/name
+        - `custom_supplier_quotation` - Supplier Quotation reference
         - `custom_original_rate` - Original rate (preserved before update)
 
 ### Phase 3: Expense Allocation (Draft Quotation)
@@ -189,7 +189,7 @@ Quotation (Submitted)
 
 ### Quotation Item
 
--   `custom_supplier_quotation_name` (Data) - Supplier Quotation number/name
+-   `custom_supplier_quotation` (Link) - Supplier Quotation reference
 -   `custom_original_rate` (Currency) - Original rate preserved (before supplier rate update)
 -   `custom_sq_rate` (Currency) - Supplier quotation rate (for calculations)
 -   `custom_sq_net_rate` (Currency) - Supplier quotation net rate
