@@ -1,128 +1,198 @@
-# Power App - Documentation
+# Power App
 
 ![Version](https://img.shields.io/badge/version-20.12.2025-blue)
 
 ## Overview
 
-Power App is a Frappe/ERPNext customization for intermediary service companies. It extends ERPNext's standard workflow to support:
+Power App is a Frappe/ERPNext customization for intermediary service companies. It extends ERPNext's standard workflow to support supplier quotation management, expense allocation, and automated pricing calculations.
 
--   Supplier quotation comparison and item selection
--   Expense allocation to quotation items
--   Material Request workflow from Customer Quotation
+---
 
-## Code Structure
+## Features
 
-### Python Files
+### 1. Material Request from Quotation
 
-| File                    | Purpose                      | JavaScript              |
-| ----------------------- | ---------------------------- | ----------------------- |
-| `quotation.py`          | Quotation functions          | `quotation.js`          |
-| `item.py`               | Item details                 | Used by `quotation.js`  |
-| `supplier_quotation.py` | Supplier Quotation functions | `supplier_quotation.js` |
-| `sales_order.py`        | Sales Order document events  | -                       |
-| `material_request.py`   | Material Request mapping     | Used by `quotation.js`  |
+-   **Create Material Request directly from Draft Quotation**
+-   Material Request is automatically linked to Quotation
+-   Enables procurement workflow before Sales Order creation
+-   Supports intermediary company workflow
 
-### JavaScript Files
+**Button:** "Material Request" (standalone, info color)
 
-| File                    | Purpose                       | Python                                           |
-| ----------------------- | ----------------------------- | ------------------------------------------------ |
-| `quotation.js`          | Quotation form logic          | `quotation.py`, `item.py`, `material_request.py` |
-| `supplier_quotation.js` | Supplier Quotation form logic | `supplier_quotation.py`                          |
+---
 
-## Key Features
+### 2. Supplier Quotation Comparison
 
-### 1. Supplier Quotation Item Selection
+-   **Open Supplier Quotation Comparison report from Quotation**
+-   Pre-filtered by Material Request/RFQ if available
+-   If multiple Material Requests exist, selection dialog appears
+-   Quick comparison of supplier offers
 
--   Select items from multiple supplier quotations
--   Add selected items to customer quotation
--   Track supplier rates and original rates
--   Read-only view for submitted quotations
+**Button:** "Compare Supplier Quotations" (standalone, warning/orange color)
 
-### 2. Expense Allocation
+---
 
--   Add expenses to quotations
--   Automatically distribute expenses to items proportionally
--   Calculate final rates with expenses
+### 3. Select Items from Supplier Quotations
 
-### 3. Material Request Workflow
+-   **Multi-select items from multiple Supplier Quotations**
+-   Dialog displays all items from linked Supplier Quotations
+-   Select items using checkboxes
+-   Items are added/updated in Customer Quotation with supplier rates
+-   Tracks supplier quotation reference for each item
 
--   Create Material Request from Draft Quotation
--   Link Material Request to Quotation
--   Track supplier quotations via Material Request
+**Features:**
 
-### 4. Supplier Quotation Comparison
+-   Full functionality in Draft Quotation
+-   Read-only view in Submitted Quotation
+-   Automatic rate updates from supplier quotations
+-   Supplier quotation reference tracking
 
--   Open comparison report from Quotation
--   Filter by Material Request/RFQ
--   Select Material Request if multiple exist
+**Button:** "Select Items from Supplier Quotations" (standalone, success/green color)
+**Read-only Button:** "View Supplier Quotation Items" (standalone, info color)
 
-### 5. Approved Workflow
+---
 
--   Approved checkbox required before submitting Quotation
--   Submit button visibility controlled by Approved status
+### 4. Expense Allocation at Quotation Level
+
+-   **Add expenses to Quotation before purchase**
+-   Automatic expense distribution to items proportionally
+-   Real-time rate recalculation when expenses are modified/deleted
+-   Expenses included in final pricing upfront
+
+**Features:**
+
+-   Add multiple expense types (shipping, customs, handling, etc.)
+-   Proportional distribution based on item amounts
+-   Auto-save with 500ms debounce when expenses change
+-   Rates automatically restore to original when expenses are removed
+-   Margin can be applied after expense distribution
+
+**Table:** `custom_quotation_expenses_table` (Service Expense)
+
+---
+
+### 5. Approved Workflow for Quotation
+
+-   **Approval required before Quotation submission**
+-   Submit button visibility controlled by Approved checkbox
+-   Prevents accidental submission without approval
 -   Read-only item selection after submission
--   Standard ERPNext Sales Order creation from submitted Quotation
 
-## Document Events
+**Features:**
 
-### Quotation
+-   Approved checkbox (`custom_approved`) required
+-   Submit button hidden until Approved = 1
+-   Validation on submit attempt
+-   Prevents modifications after submission
 
--   `validate`: Calculate expense allocation and item rates (`quotation.py::quotation_validate`)
--   `before_submit`: Validate Approved checkbox before submit (`quotation.py::quotation_before_submit`)
+---
 
-### Sales Order
+### 6. Automatic Expense Flow to Sales Order
 
--   `before_save`: Copy quotation expenses to sales order (`sales_order.py::copy_quotation_expenses_to_sales_order`)
--   `on_submit`: Create journal entry for service expenses (`sales_order.py::create_je_from_service_expence`)
+-   **Expenses automatically copied from Quotation to Sales Order**
+-   No manual data entry required
+-   Maintains expense tracking through sales cycle
 
-## API Methods
+**Flow:**
 
-### Quotation
+-   Quotation Expenses → Sales Order Expenses (automatic copy)
+-   Sales Order Expenses → Journal Entry (automatic creation on submit)
 
--   `power_app.quotation.get_supplier_quotation_items(quotation_name)` - Get supplier quotation items
--   `power_app.quotation.get_material_requests_from_quotation(quotation_name)` - Get material requests
--   `power_app.quotation.add_items_from_supplier_quotations(quotation_name, selected_items)` - Add selected items to quotation
+---
 
-### Item
+### 7. Automatic Journal Entry Creation
 
--   `power_app.item.get_item_details(item_code)` - Get item stock, rates, supplier
+-   **Journal Entry created automatically on Sales Order submit**
+-   Records expenses in accounting system
+-   No manual Journal Entry creation required
 
-### Supplier Quotation
+**Structure:**
 
--   `power_app.supplier_quotation.check_quotation_linked(doc)` - Check if linked to quotation
--   `power_app.supplier_quotation.update_quotation_linked(doc, q)` - Update quotation with items
+-   **Debit:** Expense accounts (from each expense row)
+-   **Credit:** Default service expense account (from Company settings)
+-   Journal Entry automatically submitted
 
-### Mapper
+---
 
--   `power_app.material_request.make_material_request_from_quotation(source, target)` - Create Material Request
+### 8. Real-time Expense Recalculation
 
-## Workflow
+-   **Rates update automatically when expenses change**
+-   No manual save required
+-   Debounced auto-save (500ms delay)
+-   Prevents multiple saves during rapid changes
 
-```
-Customer Quotation (Draft)
-    ↓
-Material Request (from Quotation)
-    ↓
-Request for Quotation (RFQ)
-    ↓
-Supplier Quotations (Multiple)
-    ↓
-Select Items from Supplier Quotations (Full functionality)
-    ↓
-Update Customer Quotation with Selected Items
-    ↓
-Add Expenses
-    ↓
-Check Approved
-    ↓
-Submit Customer Quotation (Only if Approved = 1)
-    ↓
-Customer Quotation (Submitted)
-    ├── View Supplier Quotation Items (Read-only)
-    └── Create Sales Order (Standard ERPNext)
-        ↓
-Sales Order → Delivery Note → Sales Invoice
-```
+**Triggers:**
+
+-   Expense amount changed
+-   Expense row added
+-   Expense row removed
+
+---
+
+### 9. Rate Restoration Logic
+
+-   **Automatic rate restoration before expense distribution**
+-   Uses supplier quotation rate if available
+-   Falls back to price list rate if no supplier quotation
+-   Ensures accurate expense distribution
+
+**Logic:**
+
+1. Check if item has supplier quotation → Use supplier rate
+2. If no supplier quotation → Use price_list_rate
+3. Restore rate to original value
+4. Distribute expenses proportionally
+5. Apply margin if set
+
+---
+
+### 10. Landed Cost Voucher Extension
+
+-   **Extended Landed Cost Voucher to support Service Items**
+-   Original ERPNext: Only Stock Items and Fixed Assets
+-   Power App: Stock Items, Fixed Assets, and Service Items
+
+**Use Case:**
+
+-   Add expenses after Purchase Receipt (for purchased items)
+-   Works with Service Items (not just stock items)
+-   Safe implementation (doesn't affect stock ledger or valuation)
+
+**Note:** Service Expense Table in Quotation is still required for expenses before purchase.
+
+---
+
+### 11. Item History Display
+
+-   **Show item price and stock details in dialog**
+-   Displays item information from multiple sources
+-   Helps in decision-making during item selection
+
+**Button:** "Show Item History" (standalone, info color)
+
+---
+
+### 12. Unified Logging System
+
+-   **Consistent logging format across all files**
+-   Frontend: `console.log('[filename.js] (message)')`
+-   Backend: `frappe.log_error(f"[filename.py] function: message")`
+-   Easier debugging and troubleshooting
+
+---
+
+## Key Benefits
+
+✅ **Expense Management:** Add expenses at Quotation stage (before purchase)
+✅ **Supplier Integration:** Direct item selection from supplier quotations
+✅ **Automated Calculations:** Automatic expense distribution and rate updates
+✅ **Real-time Updates:** Rates recalculate automatically when expenses change
+✅ **Approval Control:** Prevent submission without approval
+✅ **Accounting Integration:** Automatic Journal Entry creation
+✅ **Service Items Support:** Extended Landed Cost Voucher for service items
+✅ **No Method Overrides:** Uses document events to preserve ERPNext logic
+
+---
 
 ## Installation
 
@@ -131,8 +201,22 @@ Sales Order → Delivery Note → Sales Invoice
 3. Clear cache: `bench clear-cache`
 4. Restart: `bench restart`
 
+---
+
+## Documentation
+
+-   **Complete Workflow:** `app_workflow.md`
+-   **Expense Flow:** `app_expenses_workflow.md`
+-   **File Structure:** `app_file_structure.md`
+-   **API Reference:** `app_api_tree.md`
+-   **Implementation Plan:** `app_plan.md`
+-   **vs ERPNext:** `app_vs_erpnext_differences.md`
+
+---
+
 ## Notes
 
--   No method overrides - uses document events to preserve ERPNext's original logic
--   All code organized by functionality (one file per DocType/feature)
+-   All custom logic uses document events (no method overrides, except Landed Cost Voucher class override)
+-   Code organized by functionality (one file per DocType/feature)
 -   Python and JavaScript files have matching names where applicable
+-   Follows AGENTS.md guidelines
