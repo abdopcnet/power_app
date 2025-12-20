@@ -179,11 +179,7 @@ def add_items_from_supplier_quotations(quotation_name, selected_items):
         item_name = item_data.get("item_name")
 
         if existing_item:
-            # Step 1: Copy current rate to custom_original_rate
-            current_rate = flt(existing_item.rate) or 0.0
-            existing_item.custom_original_rate = current_rate
-
-            # Step 2: Update rate with supplier_rate
+            # Update rate with supplier_rate
             existing_item.rate = supplier_rate
             existing_item.net_rate = supplier_rate
             existing_item.amount = supplier_rate * flt(existing_item.qty)
@@ -193,7 +189,7 @@ def add_items_from_supplier_quotations(quotation_name, selected_items):
 
             items_updated += 1
             frappe.log_error(
-                f"[quotation.py] add_items_from_supplier_quotations: Updated item {item_data.get('item_code')} - rate: {current_rate} -> {supplier_rate}")
+                f"[quotation.py] add_items_from_supplier_quotations: Updated item {item_data.get('item_code')} with rate {supplier_rate}")
         else:
             # Add new item
             item_row = {
@@ -209,7 +205,6 @@ def add_items_from_supplier_quotations(quotation_name, selected_items):
             # Add custom fields for supplier quotation tracking
             item_row.update({
                 "custom_supplier_quotation": item_data.get("supplier_quotation"),
-                "custom_original_rate": supplier_rate,
             })
 
             # Calculate amount
@@ -258,6 +253,52 @@ def quotation_validate(doc, method):
     """
     from frappe.utils import flt
 
+    # Step 1: Restore original rates before applying expenses
+    # This ensures that when expenses are deleted/changed, rates return to original
+    for item in doc.items:
+        original_rate = None
+
+        # Check if item has supplier quotation
+        if hasattr(item, 'custom_supplier_quotation') and item.custom_supplier_quotation:
+            # Get rate from Supplier Quotation Item
+            try:
+                sq_items = frappe.get_all(
+                    "Supplier Quotation Item",
+                    filters={
+                        "parent": item.custom_supplier_quotation,
+                        "item_code": item.item_code
+                    },
+                    fields=["rate"],
+                    limit=1
+                )
+                if sq_items:
+                    original_rate = flt(sq_items[0].rate)
+                    frappe.log_error(
+                        f"[quotation.py] quotation_validate: Restored rate from Supplier Quotation {item.custom_supplier_quotation}: {original_rate}")
+            except Exception as e:
+                frappe.log_error(
+                    f"[quotation.py] quotation_validate: Error fetching rate from Supplier Quotation: {str(e)}")
+
+        # If no supplier quotation or rate not found, use price_list_rate
+        if original_rate is None or original_rate == 0:
+            # Use price_list_rate if available and not zero, otherwise keep current rate
+            if flt(item.price_list_rate) > 0:
+                original_rate = flt(item.price_list_rate)
+                frappe.log_error(
+                    f"[quotation.py] quotation_validate: Using price_list_rate: {original_rate}")
+            else:
+                # If price_list_rate is zero or empty, use current rate as fallback
+                original_rate = flt(item.rate) or 0
+                frappe.log_error(
+                    f"[quotation.py] quotation_validate: Using current rate as fallback: {original_rate}")
+
+        # Restore original rate
+        item.rate = original_rate
+        item.net_rate = original_rate
+        item.amount = original_rate * flt(item.qty)
+        item.net_amount = original_rate * flt(item.qty)
+
+    # Step 2: Calculate total expenses
     total_expenses = 0.00
     if hasattr(doc, 'custom_quotation_expenses_table') and doc.custom_quotation_expenses_table:
         for i in doc.custom_quotation_expenses_table:
@@ -265,14 +306,14 @@ def quotation_validate(doc, method):
         frappe.log_error(
             f"[quotation.py] quotation_validate: Total expenses: {total_expenses}")
 
-    # Calculate total item amount for expense distribution
+    # Step 3: Calculate total item amount for expense distribution
     total_item_amount = 0.00
     total_net_item_amount = 0.00
     for i in doc.items:
         total_item_amount += flt(i.amount)
         total_net_item_amount += flt(i.net_amount)
 
-    # Distribute expenses to items
+    # Step 4: Distribute expenses to items
     if total_item_amount != 0 and total_net_item_amount != 0 and total_expenses > 0:
         for i in doc.items:
             expense_per_item = (
@@ -283,7 +324,7 @@ def quotation_validate(doc, method):
             i.amount = i.rate * flt(i.qty)
             i.net_amount = i.net_rate * flt(i.qty)
 
-    # Apply margin if exists
+    # Step 5: Apply margin if exists
     if hasattr(doc, 'custom_item_margin') and flt(doc.custom_item_margin) != 0:
         for i in doc.items:
             margin_amount = flt(i.rate) * flt(doc.custom_item_margin) / 100
