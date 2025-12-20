@@ -287,3 +287,14 @@ def quotation_validate(doc, method):
     if (hasattr(doc, 'custom_quotation_expenses_table') and doc.custom_quotation_expenses_table) or \
        (hasattr(doc, 'custom_item_margin') and flt(doc.custom_item_margin) != 0):
         frappe.msgprint(_("Item Rate Updated"))
+
+
+def quotation_before_submit(doc, method):
+    """
+    Document event handler for Quotation before_submit
+    Allows submitting Quotation only if Approved checkbox is checked
+    """
+    if not hasattr(doc, 'custom_approved') or not doc.custom_approved:
+        frappe.throw(
+            _("Please check 'Approved' checkbox before submitting the Quotation.")
+        )
