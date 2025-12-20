@@ -22,6 +22,7 @@ Each functionality has its own Python file and corresponding JavaScript file (if
 -   `get_material_requests_from_quotation(quotation_name)` - Get material requests
 -   `add_items_from_supplier_quotations(quotation_name, selected_items)` - Add selected items to quotation
 -   `quotation_validate(doc, method)` - Document event: Quotation.validate
+-   `quotation_before_submit(doc, method)` - Document event: Quotation.before_submit (requires custom_approved = 1)
 
 ### `item.py`
 
@@ -47,9 +48,14 @@ Each functionality has its own Python file and corresponding JavaScript file (if
 
 -   `add_show_item_history_button(frm)` - Show item history
 -   `add_compare_supplier_quotations_button(frm)` - Open comparison report
--   `add_select_items_from_supplier_quotations_button(frm)` - Select items dialog
+-   `add_select_items_from_supplier_quotations_button(frm)` - Select items dialog (Draft: full, Submitted: read-only)
 -   `make_MR(frm)` - Create Material Request button
--   `show_item_selection_dialog(frm)` - Display items dialog
+-   `show_item_selection_dialog(frm)` - Display items dialog (editable)
+-   `show_item_selection_dialog_readonly(frm)` - Display items dialog (read-only)
+-   `show_item_selection_dialog_content(frm, items)` - Display items with selection (Draft)
+-   `show_item_selection_dialog_content_readonly(frm, items)` - Display items without selection (Submitted)
+-   `build_supplier_items_table_html(items, currency)` - Build table with checkboxes
+-   `build_supplier_items_table_html_readonly(items, currency)` - Build table without checkboxes
 -   `setup_item_selection_checkboxes(dialog, totalItems)` - Enable multi-select
 
 ### `supplier_quotation.js`
@@ -58,9 +64,10 @@ Each functionality has its own Python file and corresponding JavaScript file (if
 
 ## Document Events
 
--   `Quotation.validate` → `quotation.quotation_validate()`
--   `Sales Order.before_save` → `sales_order.copy_quotation_expenses_to_sales_order()`
--   `Sales Order.on_submit` → `sales_order.create_je_from_service_expence()`
+-   `Quotation.validate` → `quotation.quotation_validate()` - Calculate expense allocation and item rates
+-   `Quotation.before_submit` → `quotation.quotation_before_submit()` - Validate Approved checkbox before submit
+-   `Sales Order.before_save` → `sales_order.copy_quotation_expenses_to_sales_order()` - Copy expenses from Quotation
+-   `Sales Order.on_submit` → `sales_order.create_je_from_service_expence()` - Create Journal Entry for expenses
 
 ## Notes
 
