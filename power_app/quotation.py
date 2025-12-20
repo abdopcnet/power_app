@@ -164,19 +164,21 @@ def add_items_from_supplier_quotations(quotation_name, selected_items):
             "item_name") or sq_item.item_name or item_doc.item_name
 
         if existing_item:
-            # Update existing item: Update rates and custom fields only
+            # Update existing item: Save current rate to custom_original_rate, then update with supplier rate
+            # Step 1: Save current rate to custom_original_rate (preserve original rate)
+            current_rate = flt(existing_item.rate) or 0.0
+            existing_item.custom_original_rate = current_rate
+
+            # Step 2: Update rate with supplier rate (new rate from supplier quotation)
             existing_item.rate = supplier_rate
             existing_item.net_rate = supplier_rate
             existing_item.amount = supplier_rate * flt(existing_item.qty)
             existing_item.net_amount = supplier_rate * flt(existing_item.qty)
 
             # Update custom fields
-            existing_item.custom_supplier_quotation = item_data.get(
+            existing_item.custom_supplier_quotation_name = item_data.get(
                 "supplier_quotation")
-            existing_item.custom_supplier_quotation_item = item_data.get(
-                "item_id")
-            existing_item.custom_supplier_rate = supplier_rate
-            existing_item.custom_original_rate = supplier_rate
+            # Note: custom_original_rate now contains the previous rate value
 
             items_updated += 1
         else:
@@ -193,9 +195,7 @@ def add_items_from_supplier_quotations(quotation_name, selected_items):
 
             # Add custom fields for supplier quotation tracking
             item_row.update({
-                "custom_supplier_quotation": item_data.get("supplier_quotation"),
-                "custom_supplier_quotation_item": item_data.get("item_id"),
-                "custom_supplier_rate": supplier_rate,
+                "custom_supplier_quotation_name": item_data.get("supplier_quotation"),
                 "custom_original_rate": supplier_rate,
             })
 
