@@ -163,4 +163,3 @@ power_app/
 -   Code comments and documentation in English
 -   User-facing messages preserve original language
 -   No method overrides - only document events
--   **Important:** The field `compnay` in Service Expense DocType contains a typo (should be `company`), but it's kept as-is in JSON files per AGENTS.md rules. Code uses `compnay` to match the JSON field name.
