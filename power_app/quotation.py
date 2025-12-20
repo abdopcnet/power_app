@@ -242,8 +242,8 @@ def quotation_validate(doc, method):
     from frappe.utils import flt
 
     total_expenses = 0.00
-    if hasattr(doc, 'custom_quotation_expenses') and doc.custom_quotation_expenses:
-        for i in doc.custom_quotation_expenses:
+    if hasattr(doc, 'custom_quotation_expenses_table') and doc.custom_quotation_expenses_table:
+        for i in doc.custom_quotation_expenses_table:
             total_expenses += flt(i.amount)
 
     total_item_rate = 0.00
@@ -284,6 +284,6 @@ def quotation_validate(doc, method):
             i.amount = i.rate * i.qty
             i.net_amount = i.net_rate * i.qty
 
-    if (hasattr(doc, 'custom_quotation_expenses') and doc.custom_quotation_expenses) or \
+    if (hasattr(doc, 'custom_quotation_expenses_table') and doc.custom_quotation_expenses_table) or \
        (hasattr(doc, 'custom_item_margin') and flt(doc.custom_item_margin) != 0):
         frappe.msgprint(_("Item Rate Updated"))
