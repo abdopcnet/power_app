@@ -12,22 +12,24 @@ This document highlights the key differences between Power App workflow and stan
 
 **Location:** Purchase Side Only
 
-- **Landed Cost Voucher** is used to add expenses to purchased items
-- **Timing:** Expenses can only be added **after** Purchase Receipt is submitted
-- **Process:**
-  1. Create Purchase Receipt from Purchase Order
-  2. Submit Purchase Receipt
-  3. Create Landed Cost Voucher
-  4. Link to Purchase Receipt
-  5. Add expenses (shipping, customs, handling, etc.)
-  6. Submit Landed Cost Voucher
-  7. **Result:** Purchase Receipt item valuation rates are updated
+-   **Landed Cost Voucher** is used to add expenses to purchased items
+-   **Timing:** Expenses can only be added **after** Purchase Receipt is submitted
+-   **Process:**
+    1. Create Purchase Receipt from Purchase Order
+    2. Submit Purchase Receipt
+    3. Create Landed Cost Voucher
+    4. Link to Purchase Receipt
+    5. Add expenses (shipping, customs, handling, etc.)
+    6. Submit Landed Cost Voucher
+    7. **Result:** Purchase Receipt item valuation rates are updated
 
 **Limitations:**
-- ❌ Cannot add expenses at Quotation stage
-- ❌ Expenses are unknown until goods are received
-- ❌ Cannot include expenses in customer quotation pricing upfront
-- ❌ Expenses are added to Purchase Receipt items, not Quotation items
+
+-   ❌ Cannot add expenses at Quotation stage
+-   ❌ Expenses are unknown until goods are received
+-   ❌ Cannot include expenses in customer quotation pricing upfront
+-   ❌ Expenses are added to Purchase Receipt items, not Quotation items
+-   ❌ Landed Cost Voucher only supports Stock Items and Fixed Assets (not Service Items)
 
 **Reference:** `original_erpnext_workflow/landed_cost_voucher_analysis.md`
 
@@ -35,21 +37,23 @@ This document highlights the key differences between Power App workflow and stan
 
 **Location:** Sales Side (Quotation Level)
 
-- **Custom Expense Table** (`custom_quotation_expenses_table`) is used
-- **Timing:** Expenses are added **at Quotation stage** (before purchase)
-- **Process:**
-  1. Create Customer Quotation (Draft)
-  2. Add expenses in `custom_quotation_expenses_table`
-  3. On save (validate event), expenses are automatically distributed to items
-  4. Expenses are included in item rates immediately
-  5. Expenses are copied to Sales Order when created
-  6. Journal Entry is created automatically on Sales Order submit
+-   **Custom Expense Table** (`custom_quotation_expenses_table`) is used
+-   **Timing:** Expenses are added **at Quotation stage** (before purchase)
+-   **Process:**
+    1. Create Customer Quotation (Draft)
+    2. Add expenses in `custom_quotation_expenses_table`
+    3. On save (validate event), expenses are automatically distributed to items
+    4. Expenses are included in item rates immediately
+    5. Expenses are copied to Sales Order when created
+    6. Journal Entry is created automatically on Sales Order submit
 
 **Advantages:**
-- ✅ Expenses can be added at Quotation stage
-- ✅ Expenses are distributed to items automatically
-- ✅ Final rates include expenses upfront
-- ✅ Expenses flow from Quotation → Sales Order → Journal Entry
+
+-   ✅ Expenses can be added at Quotation stage
+-   ✅ Expenses are distributed to items automatically
+-   ✅ Final rates include expenses upfront
+-   ✅ Expenses flow from Quotation → Sales Order → Journal Entry
+-   ✅ Real-time recalculation when expenses are modified/deleted
 
 **Reference:** `app_expenses_workflow.md`
 
@@ -61,22 +65,22 @@ This document highlights the key differences between Power App workflow and stan
 
 **Method:** Landed Cost Voucher
 
-- Expenses are distributed based on:
-  - **Qty:** Proportional to item quantities
-  - **Amount:** Proportional to item amounts
-  - **Manual:** User enters charges per item manually
-- Distribution happens **after** Purchase Receipt
-- Updates Purchase Receipt item valuation rates
+-   Expenses are distributed based on:
+    -   **Qty:** Proportional to item quantities
+    -   **Amount:** Proportional to item amounts
+    -   **Manual:** User enters charges per item manually
+-   Distribution happens **after** Purchase Receipt
+-   Updates Purchase Receipt item valuation rates
 
 ### Power App
 
 **Method:** Automatic Distribution in Quotation
 
-- Expenses are distributed **proportionally based on item amounts**
-- Formula: `expense_per_item = (item_amount / total_item_amount) * total_expenses`
-- Distribution happens **on every save** (validate event)
-- Updates Quotation item rates immediately
-- Can apply margin after expense distribution
+-   Expenses are distributed **proportionally based on item amounts**
+-   Formula: `expense_per_item = (item_amount / total_item_amount) * total_expenses`
+-   Distribution happens **on every save** (validate event)
+-   Updates Quotation item rates immediately
+-   Can apply margin after expense distribution
 
 ---
 
@@ -111,9 +115,10 @@ This document highlights the key differences between Power App workflow and stan
 ```
 
 **Key Points:**
-- Material Request is created **from Sales Order** (not from Quotation)
-- Expenses are added **after** Purchase Receipt
-- Expenses update Purchase Receipt valuation, not Quotation pricing
+
+-   Material Request is created **from Sales Order** (not from Quotation)
+-   Expenses are added **after** Purchase Receipt
+-   Expenses update Purchase Receipt valuation, not Quotation pricing
 
 **Reference:** `original_erpnext_workflow/original_erpnext_sales_cycle_symmery.md` (Section: Intermediary Company Workflow)
 
@@ -143,10 +148,11 @@ This document highlights the key differences between Power App workflow and stan
 ```
 
 **Key Points:**
-- Material Request is created **from Quotation** (Draft status)
-- Expenses are added **at Quotation stage** (before purchase)
-- Expenses are distributed to items and included in pricing
-- Expenses flow through to Sales Order and Journal Entry
+
+-   Material Request is created **from Quotation** (Draft status)
+-   Expenses are added **at Quotation stage** (before purchase)
+-   Expenses are distributed to items and included in pricing
+-   Expenses flow through to Sales Order and Journal Entry
 
 **Reference:** `app_workflow.md`
 
@@ -156,16 +162,16 @@ This document highlights the key differences between Power App workflow and stan
 
 ### Original ERPNext
 
-- Quotation can be submitted immediately (no approval required)
-- Status changes: Draft → Open (on submit)
-- No custom approval workflow
+-   Quotation can be submitted immediately (no approval required)
+-   Status changes: Draft → Open (on submit)
+-   No custom approval workflow
 
 ### Power App
 
-- Quotation requires **Approved checkbox** (`custom_approved`) to be checked
-- Submit button is **hidden** until Approved = 1
-- `before_submit` event validates approval
-- Prevents submission without approval
+-   Quotation requires **Approved checkbox** (`custom_approved`) to be checked
+-   Submit button is **hidden** until Approved = 1
+-   `before_submit` event validates approval
+-   Prevents submission without approval
 
 ---
 
@@ -173,20 +179,20 @@ This document highlights the key differences between Power App workflow and stan
 
 ### Original ERPNext
 
-- Supplier Quotations are independent documents
-- No direct integration with Customer Quotation
-- Comparison is done manually via reports
+-   Supplier Quotations are independent documents
+-   No direct integration with Customer Quotation
+-   Comparison is done manually via reports
 
 ### Power App
 
-- Supplier Quotations are linked to Customer Quotation via Material Request
-- **"Select Items from Supplier Quotations"** button:
-  - Shows all items from linked Supplier Quotations
-  - Allows selecting items to add to Customer Quotation
-  - Updates item rates with supplier rates
-- **"Compare Supplier Quotations"** button:
-  - Opens comparison report with pre-filled filters
-- Items can be selected and added directly to Customer Quotation
+-   Supplier Quotations are linked to Customer Quotation via Material Request
+-   **"Select Items from Supplier Quotations"** button:
+    -   Shows all items from linked Supplier Quotations
+    -   Allows selecting items to add to Customer Quotation
+    -   Updates item rates with supplier rates
+-   **"Compare Supplier Quotations"** button:
+    -   Opens comparison report with pre-filled filters
+-   Items can be selected and added directly to Customer Quotation
 
 ---
 
@@ -194,19 +200,20 @@ This document highlights the key differences between Power App workflow and stan
 
 ### Original ERPNext
 
-- Item rates are set manually or from Price List
-- Rates don't change based on supplier quotations
-- Expenses (Landed Cost) update Purchase Receipt valuation, not sales rates
+-   Item rates are set manually or from Price List
+-   Rates don't change based on supplier quotations
+-   Expenses (Landed Cost) update Purchase Receipt valuation, not sales rates
 
 ### Power App
 
-- Item rates can be updated from Supplier Quotations
-- **Logic:**
-  1. Original rate is preserved in `custom_original_rate`
-  2. Rate is updated with supplier rate from selected items
-  3. Expenses are distributed and added to rates
-  4. Margin is applied if set
-- Rates reflect supplier pricing + expenses + margin
+-   Item rates can be updated from Supplier Quotations
+-   **Logic:**
+    1. Rate is updated with supplier rate from selected items
+    2. On save, original rate is restored (from Supplier Quotation or price_list_rate)
+    3. Expenses are distributed and added to rates
+    4. Margin is applied if set
+-   Rates reflect supplier pricing + expenses + margin
+-   When expenses are deleted/changed, rates automatically return to original values
 
 ---
 
@@ -214,18 +221,18 @@ This document highlights the key differences between Power App workflow and stan
 
 ### Original ERPNext
 
-- Journal Entries are created manually
-- No automatic expense recording
-- Landed Cost Voucher updates item valuation but doesn't create Journal Entry
+-   Journal Entries are created manually
+-   No automatic expense recording
+-   Landed Cost Voucher updates item valuation but doesn't create Journal Entry
 
 ### Power App
 
-- Journal Entry is created **automatically** on Sales Order submit
-- **Structure:**
-  - **Debit:** Expense accounts (from each expense row)
-  - **Credit:** Default service expense account (from Company settings)
-- Journal Entry is automatically submitted
-- Expenses are recorded in accounting system without manual intervention
+-   Journal Entry is created **automatically** on Sales Order submit
+-   **Structure:**
+    -   **Debit:** Expense accounts (from each expense row)
+    -   **Credit:** Default service expense account (from Company settings)
+-   Journal Entry is automatically submitted
+-   Expenses are recorded in accounting system without manual intervention
 
 ---
 
@@ -233,59 +240,64 @@ This document highlights the key differences between Power App workflow and stan
 
 ### Original ERPNext
 
-- Uses standard document events
-- Some methods can be overridden
-- Core logic is in controller classes
+-   Uses standard document events
+-   Some methods can be overridden
+-   Core logic is in controller classes
+-   Landed Cost Voucher only supports Stock Items and Fixed Assets
 
 ### Power App
 
-- **No method overrides** - only document events
-- All custom logic uses:
-  - `validate` event for calculations
-  - `before_save` event for copying data
-  - `before_submit` event for validation
-  - `on_submit` event for Journal Entry creation
-- Preserves ERPNext's original logic while extending functionality
+-   **Minimal method overrides** - primarily document events
+-   All custom logic uses:
+    -   `validate` event for calculations
+    -   `before_save` event for copying data
+    -   `before_submit` event for validation
+    -   `on_submit` event for Journal Entry creation
+-   **Exception:** Landed Cost Voucher class override to support Service Items
+-   Preserves ERPNext's original logic while extending functionality
 
 ---
 
 ## Summary Table
 
-| Feature | Original ERPNext | Power App |
-|---------|------------------|----------|
-| **Expense Location** | Purchase Receipt (Landed Cost Voucher) | Quotation (Custom Table) |
-| **Expense Timing** | After goods received | At Quotation stage |
-| **Expense Distribution** | Manual via Landed Cost Voucher | Automatic on save |
-| **Material Request Source** | Sales Order | Quotation (Draft) |
-| **Supplier Quotation Integration** | Manual comparison | Direct item selection |
-| **Quotation Approval** | No approval required | Required (custom_approved) |
-| **Item Rate Updates** | Manual or Price List | From Supplier Quotations |
-| **Journal Entry** | Manual creation | Automatic on Sales Order submit |
-| **Expense Flow** | Purchase Receipt → Valuation | Quotation → Sales Order → Journal Entry |
+| Feature                            | Original ERPNext                       | Power App                               |
+| ---------------------------------- | -------------------------------------- | --------------------------------------- |
+| **Expense Location**               | Purchase Receipt (Landed Cost Voucher) | Quotation (Custom Table)                |
+| **Expense Timing**                 | After goods received                   | At Quotation stage                      |
+| **Expense Distribution**           | Manual via Landed Cost Voucher         | Automatic on save                       |
+| **Material Request Source**        | Sales Order                            | Quotation (Draft)                       |
+| **Supplier Quotation Integration** | Manual comparison                      | Direct item selection                   |
+| **Quotation Approval**             | No approval required                   | Required (custom_approved)              |
+| **Item Rate Updates**              | Manual or Price List                   | From Supplier Quotations                |
+| **Journal Entry**                  | Manual creation                        | Automatic on Sales Order submit         |
+| **Expense Flow**                   | Purchase Receipt → Valuation           | Quotation → Sales Order → Journal Entry |
+| **Landed Cost Voucher Support**   | Stock Items & Fixed Assets only        | Stock Items, Fixed Assets & Service Items |
+| **Real-time Recalculation**       | Manual save required                   | Auto-save on expense changes (500ms debounce) |
 
 ---
 
 ## When to Use Each Approach
 
 ### Use Original ERPNext When:
-- You're a direct seller (not intermediary)
-- Expenses are known only after goods are received
-- You don't need to quote prices with expenses upfront
-- Standard sales cycle is sufficient
+
+-   You're a direct seller (not intermediary)
+-   Expenses are known only after goods are received
+-   You don't need to quote prices with expenses upfront
+-   Standard sales cycle is sufficient
 
 ### Use Power App When:
-- You're an intermediary service company
-- You need to quote prices with expenses included upfront
-- You want automatic expense distribution
-- You need supplier quotation integration
-- You want automatic Journal Entry creation
+
+-   You're an intermediary service company
+-   You need to quote prices with expenses included upfront
+-   You want automatic expense distribution
+-   You need supplier quotation integration
+-   You want automatic Journal Entry creation
 
 ---
 
 ## References
 
-- **Power App Workflow:** `app_workflow.md`
-- **Power App Expenses:** `app_expenses_workflow.md`
-- **Original ERPNext Sales Cycle:** `original_erpnext_workflow/original_erpnext_sales_cycle_symmery.md`
-- **Landed Cost Voucher:** `original_erpnext_workflow/landed_cost_voucher_analysis.md`
-
+-   **Power App Workflow:** `app_workflow.md`
+-   **Power App Expenses:** `app_expenses_workflow.md`
+-   **Original ERPNext Sales Cycle:** `original_erpnext_workflow/original_erpnext_sales_cycle_symmery.md`
+-   **Landed Cost Voucher:** `original_erpnext_workflow/landed_cost_voucher_analysis.md`
