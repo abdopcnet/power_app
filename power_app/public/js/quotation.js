@@ -1,5 +1,44 @@
 frappe.ui.form.on('Quotation', {
 	refresh(frm) {
+		// Show/hide Submit button based on Approved checkbox
+		if (frm.doc.docstatus === 0 && !frm.is_new()) {
+			// Show Submit button only if Approved is checked
+			setTimeout(() => {
+				const submit_btn = frm.page.inner_toolbar.find(
+					'button[data-label="Submit"], button:contains("Submit")',
+				);
+				const submit_btn_by_class = frm.page.inner_toolbar
+					.find('.btn-primary')
+					.filter(function () {
+						return $(this).text().trim() === __('Submit');
+					});
+
+				if (frm.doc.custom_approved) {
+					// Show Submit button if Approved is checked
+					if (submit_btn.length) {
+						submit_btn.show();
+					}
+					if (submit_btn_by_class.length) {
+						submit_btn_by_class.show();
+					}
+				} else {
+					// Hide Submit button if Approved is not checked
+					if (submit_btn.length) {
+						submit_btn.hide();
+					}
+					if (submit_btn_by_class.length) {
+						submit_btn_by_class.hide();
+					}
+				}
+			}, 100);
+		}
+
+		// Show Create Sales Order button when Quotation is Submitted and Approved
+		if (frm.doc.docstatus === 1 && frm.doc.custom_approved) {
+			// Add Create Sales Order button (standard ERPNext behavior)
+			// This will be handled by ERPNext's standard button, but we ensure it's visible
+		}
+
 		if (frm.doc.docstatus === 1) {
 			// frm.remove_custom_button("Sales Order", "Create");
 			// cur_frm.remove_custom_button('Sales Order', 'Create');
@@ -380,16 +419,30 @@ function build_supplier_quotation_comparison_url(company, rfq_name) {
 
 // Function to add "Select Items from Supplier Quotations" button
 function add_select_items_from_supplier_quotations_button(frm) {
-	// Show button when quotation is in Draft status
-	if (frm.doc.docstatus === 0 && !frm.is_new()) {
-		frm.page.add_inner_button(
-			__('Select Items from Supplier Quotations'),
-			function () {
-				show_item_selection_dialog(frm);
-			},
-			null,
-			'success',
-		);
+	// Show button when quotation is in Draft status (for editing)
+	// Or when Submitted (for viewing only)
+	if (!frm.is_new()) {
+		if (frm.doc.docstatus === 0) {
+			// Draft: Show button with full functionality
+			frm.page.add_inner_button(
+				__('Select Items from Supplier Quotations'),
+				function () {
+					show_item_selection_dialog(frm);
+				},
+				null,
+				'success',
+			);
+		} else if (frm.doc.docstatus === 1) {
+			// Submitted: Show button for viewing only (no Add Selected Items)
+			frm.page.add_inner_button(
+				__('View Supplier Quotation Items'),
+				function () {
+					show_item_selection_dialog_readonly(frm);
+				},
+				null,
+				'info',
+			);
+		}
 	}
 }
 
@@ -430,6 +483,65 @@ function show_item_selection_dialog(frm) {
 			});
 		},
 	});
+}
+
+// Function to show items in read-only mode (when Quotation is Submitted)
+function show_item_selection_dialog_readonly(frm) {
+	// Show loading message
+	frappe.show_alert(
+		{ message: __('Fetching supplier quotation items...'), indicator: 'blue' },
+		3,
+	);
+
+	// Call server method to get supplier quotation items
+	frappe.call({
+		method: 'power_app.quotation.get_supplier_quotation_items',
+		args: {
+			quotation_name: frm.doc.name,
+		},
+		callback: function (r) {
+			if (r.message && r.message.length > 0) {
+				show_item_selection_dialog_content_readonly(frm, r.message);
+			} else {
+				frappe.msgprint({
+					title: __('No Items Found'),
+					message: __('No supplier quotation items found.'),
+					indicator: 'orange',
+				});
+			}
+		},
+		error: function (r) {
+			frappe.msgprint({
+				title: __('Error'),
+				message:
+					__('Failed to fetch supplier quotation items: ') +
+					(r.message || 'Unknown error'),
+				indicator: 'red',
+			});
+		},
+	});
+}
+
+// Function to display items in read-only dialog (no Add Selected Items button)
+function show_item_selection_dialog_content_readonly(frm, items) {
+	// Build HTML table for items (read-only, no checkboxes)
+	let html = build_supplier_items_table_html_readonly(items, frm.doc.currency);
+
+	// Create dialog with wider width (read-only)
+	const d = new frappe.ui.Dialog({
+		title: __('Supplier Quotation Items (Read Only)'),
+		size: 'extra-large',
+		fields: [
+			{
+				fieldtype: 'HTML',
+				fieldname: 'items_table_html',
+				options: html,
+			},
+		],
+		// No primary_action - read-only view
+	});
+
+	d.show();
 }
 
 // Function to display items in dialog (Step 5 - with multi-select enabled)
@@ -580,6 +692,74 @@ function get_selected_items_from_dialog(dialog) {
 	});
 
 	return selectedItems;
+}
+
+// Function to build HTML table for supplier items (read-only, no checkboxes)
+function build_supplier_items_table_html_readonly(items, currency) {
+	let html = `
+		<div class="form-section card-section" style="margin-top:0; overflow-x: auto;">
+			<table class="table table-bordered table-hover" style="width: 100%; min-width: 800px; table-layout: fixed;">
+				<thead style="color: #1c5cab;">
+					<tr>
+						<th style="width: 120px;">${__('Item Code')}</th>
+						<th style="width: 200px;">${__('Item Name')}</th>
+						<th style="width: 150px;">${__('Supplier')}</th>
+						<th style="width: 150px;">${__('Supplier Quotation')}</th>
+						<th style="width: 80px; text-align: right;">${__('Qty')}</th>
+						<th style="width: 80px;">${__('UOM')}</th>
+						<th style="width: 120px; text-align: right;">${__('Rate')}</th>
+					</tr>
+				</thead>
+				<tbody>
+	`;
+
+	items.forEach((item) => {
+		const rate_formatted = frappe.format(item.rate, {
+			fieldtype: 'Currency',
+			options: currency,
+		});
+
+		// Truncate long text to prevent overflow
+		const item_code = (item.item_code || '').substring(0, 20);
+		const item_name = (item.item_name || '').substring(0, 30);
+		const supplier_name = (item.supplier_name || item.supplier || '').substring(0, 25);
+		const sq_name = (item.supplier_quotation || '').substring(0, 20);
+
+		html += `
+			<tr>
+				<td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+					<a href="/app/item/${item.item_code}" target="_blank" title="${
+			item.item_code || ''
+		}">${item_code}</a>
+				</td>
+				<td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${
+					item.item_name || ''
+				}">${item_name}</td>
+				<td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${
+					item.supplier_name || item.supplier || ''
+				}">${supplier_name}</td>
+				<td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+					<a href="/app/supplier-quotation/${item.supplier_quotation}" target="_blank" title="${
+			item.supplier_quotation || ''
+		}">${sq_name}</a>
+				</td>
+				<td style="text-align: right;">${item.qty || 0}</td>
+				<td>${item.uom || ''}</td>
+				<td style="text-align: right;">${rate_formatted}</td>
+			</tr>
+		`;
+	});
+
+	html += `
+				</tbody>
+			</table>
+		</div>
+		<p><strong>${__('Note:')}</strong> ${__(
+		'This is a read-only view. Items cannot be modified after Quotation is submitted.',
+	)}</p>
+	`;
+
+	return html;
 }
 
 // Function to build HTML table for supplier items
