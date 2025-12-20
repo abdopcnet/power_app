@@ -97,46 +97,46 @@ function add_show_item_history_button(frm) {
 		frm.page.add_inner_button(
 			__('Show Item History'),
 			async function () {
-				try {
-					// 1. Get unique items from the current quotation
-					const unique_items = [...new Set(frm.doc.items.map((item) => item.item_code))];
+			try {
+				// 1. Get unique items from the current quotation
+				const unique_items = [...new Set(frm.doc.items.map((item) => item.item_code))];
 
-					if (unique_items.length === 0) {
-						frappe.msgprint(__('No items in the current quotation.'));
-						return;
-					}
+				if (unique_items.length === 0) {
+					frappe.msgprint(__('No items in the current quotation.'));
+					return;
+				}
 
-					frappe.show_alert(
-						{ message: __('Fetching item details...'), indicator: 'blue' },
-						3,
-					);
+				frappe.show_alert(
+					{ message: __('Fetching item details...'), indicator: 'blue' },
+					3,
+				);
 
-					// 2. Fetch the required details for each unique item
-					const item_details = await fetch_item_details(frm, unique_items);
+				// 2. Fetch the required details for each unique item
+				const item_details = await fetch_item_details(frm, unique_items);
 
-					// 3. Build HTML and show dialog
-					const d = new frappe.ui.Dialog({
-						title: __('Item Price & Stock Details'),
-						fields: [
-							{
-								fieldtype: 'HTML',
-								fieldname: 'item_details_html',
-								options: build_item_details_html(item_details, frm.doc.currency),
-							},
-						],
-						indicator: 'green',
-					});
-					d.show();
-				} catch (e) {
+				// 3. Build HTML and show dialog
+				const d = new frappe.ui.Dialog({
+					title: __('Item Price & Stock Details'),
+					fields: [
+						{
+							fieldtype: 'HTML',
+							fieldname: 'item_details_html',
+							options: build_item_details_html(item_details, frm.doc.currency),
+						},
+					],
+					indicator: 'green',
+				});
+				d.show();
+			} catch (e) {
 					console.log(
 						`[quotation.js] (Error fetching item details: ${e.message || 'Unknown'})`,
 					);
-					frappe.msgprint({
-						title: __('Error'),
-						message: __('Failed to fetch item details: ') + e.message,
-						indicator: 'red',
-					});
-				}
+				frappe.msgprint({
+					title: __('Error'),
+					message: __('Failed to fetch item details: ') + e.message,
+					indicator: 'red',
+				});
+			}
 			},
 			null,
 			'info',
@@ -737,20 +737,24 @@ function build_supplier_items_table_html_readonly(items, currency) {
 		html += `
 			<tr>
 				<td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-					<a href="/app/item/${item.item_code}" target="_blank" title="${
-			item.item_code || ''
-		}">${item_code}</a>
+					<a href="/app/item/${frappe.utils.escape_html(
+						item.item_code || '',
+					)}" target="_blank" title="${frappe.utils.escape_html(
+			item.item_code || '',
+		)}">${frappe.utils.escape_html(item_code)}</a>
 				</td>
-				<td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${
-					item.item_name || ''
-				}">${item_name}</td>
-				<td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${
-					item.supplier_name || item.supplier || ''
-				}">${supplier_name}</td>
+				<td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${frappe.utils.escape_html(
+					item.item_name || '',
+				)}">${frappe.utils.escape_html(item_name)}</td>
+				<td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${frappe.utils.escape_html(
+					item.supplier_name || item.supplier || '',
+				)}">${frappe.utils.escape_html(supplier_name)}</td>
 				<td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-					<a href="/app/supplier-quotation/${item.supplier_quotation}" target="_blank" title="${
-			item.supplier_quotation || ''
-		}">${sq_name}</a>
+					<a href="/app/supplier-quotation/${frappe.utils.escape_html(
+						item.supplier_quotation || '',
+					)}" target="_blank" title="${frappe.utils.escape_html(
+			item.supplier_quotation || '',
+		)}">${frappe.utils.escape_html(sq_name)}</a>
 				</td>
 				<td style="text-align: right;">${item.qty || 0}</td>
 				<td>${item.uom || ''}</td>
