@@ -133,9 +133,9 @@ doctype_js = {
 # ---------------
 # Override standard doctype classes
 
-# override_doctype_class = {
-# 	"ToDo": "custom_app.overrides.CustomToDo"
-# }
+override_doctype_class = {
+    "Landed Cost Voucher": "power_app.landed_cost_voucher.LandedCostVoucher"
+}
 
 # Document Events
 # ---------------
