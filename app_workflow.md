@@ -43,10 +43,9 @@ Power App extends ERPNext's standard sales cycle to support intermediary service
     - Dialog shows all items from linked Supplier Quotations
     - Select items using checkboxes
     - Click "Add Selected Items"
-    - **Logic:** Current `rate` is copied to `custom_original_rate`, then `rate` is updated with supplier rate
+    - **Logic:** `rate` is updated with supplier rate from selected items
     - Items are added/updated in Customer Quotation with:
         - `custom_supplier_quotation` - Supplier Quotation reference
-        - `custom_original_rate` - Original rate (preserved before update)
         - `rate` - Updated with supplier rate from selected items
 
 ### Phase 3: Expense Allocation (Draft Quotation)
@@ -60,11 +59,19 @@ Power App extends ERPNext's standard sales cycle to support intermediary service
         - Company and Default Account (auto-fetched)
 
 8. **Expense Distribution**
-    - On save (validate event), expenses are automatically distributed to items
-    - Distribution is proportional based on item amounts (using current `rate` and `amount`)
-    - Formula: `rate = current_rate + (expense_per_item / qty)`
-    - If margin exists: `rate = rate + (rate * margin_percentage / 100)`
-    - **Note:** Uses current `rate` field directly (no custom*sq*\* fields)
+    - On save (validate event):
+        1. First, restore original rates:
+            - If `custom_supplier_quotation` exists: Get rate from Supplier Quotation Item
+            - If `custom_supplier_quotation` is empty: Use `price_list_rate`
+        2. Then, distribute expenses proportionally based on item amounts
+        3. Formula: `rate = original_rate + (expense_per_item / qty)`
+        4. If margin exists: `rate = rate + (rate * margin_percentage / 100)`
+    - **Real-time Recalculation:**
+        - When expense amount is changed: Auto-save after 500ms (debounced)
+        - When expense row is added: Auto-save after 500ms
+        - When expense row is removed: Auto-save after 500ms
+        - Rates update automatically without manual save
+    - **Note:** When expenses are deleted/changed, rates automatically return to original values
 
 ### Phase 4: Approval and Submission
 
@@ -193,7 +200,6 @@ Quotation (Submitted)
 ### Quotation Item
 
 -   `custom_supplier_quotation` (Link) - Supplier Quotation reference
--   `custom_original_rate` (Currency) - Original rate preserved (before supplier rate update)
 -   `custom_item_expense_amount` (Currency) - Expense amount per item
 
 ### Sales Order
@@ -211,4 +217,7 @@ Quotation (Submitted)
 -   After submission, item selection becomes read-only
 -   Expenses are distributed proportionally based on item amounts
 -   Journal Entry is created automatically on Sales Order submit
--   All custom logic uses document events (no method overrides)
+-   All custom logic uses document events (no method overrides, except Landed Cost Voucher)
+-   Real-time expense recalculation with 500ms debounce
+-   Landed Cost Voucher extended to support Service Items (after purchase)
+-   Service Expense Table is still required for Quotation-level expenses (before purchase)
