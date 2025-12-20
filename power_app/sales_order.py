@@ -85,53 +85,71 @@ def copy_quotation_expenses_to_sales_order(doc, method):
     Copies custom_quotation_expenses_table from Quotation to Sales Order custom_sales_order_service_expenses_table
     Uses mapper hook approach - extends without overriding
     """
-    # Only process if Sales Order is created from Quotation
-    if not doc.quotation_to or doc.quotation_to != "Quotation":
+    # Check if expenses already copied (avoid duplicate on save)
+    if hasattr(doc, '_quotation_expenses_copied'):
         frappe.log_error(
-            f"[sales_order.py] copy_quotation_expenses_to_sales_order: Not from Quotation, skipping")
+            f"[sales_order.py] copy_quotation_expenses_to_sales_order: Expenses already copied, skipping")
         return
 
-    # Get quotation reference
-    frappe.log_error(
-        f"[sales_order.py] copy_quotation_expenses_to_sales_order: Processing expenses copy for {doc.name}")
+    # Get quotation reference - try multiple methods
     quotation_name = None
-    for item in doc.items:
-        if item.quotation_item:
-            # Get parent quotation from quotation_item
-            quotation_name = frappe.db.get_value(
-                "Quotation Item", item.quotation_item, "parent"
-            )
-            break
+
+    # Method 1: Check if created from Quotation via quotation_to field
+    if hasattr(doc, 'quotation_to') and doc.quotation_to == "Quotation":
+        # Get quotation from items
+        for item in doc.items:
+            if item.quotation_item:
+                quotation_name = frappe.db.get_value(
+                    "Quotation Item", item.quotation_item, "parent"
+                )
+                break
+
+    # Method 2: Get quotation from prevdoc_docname (set by mapper)
+    if not quotation_name and hasattr(doc, 'prevdoc_docname'):
+        quotation_name = doc.prevdoc_docname
+
+    # Method 3: Get quotation from items (quotation_item field)
+    if not quotation_name:
+        for item in doc.items:
+            if item.quotation_item:
+                quotation_name = frappe.db.get_value(
+                    "Quotation Item", item.quotation_item, "parent"
+                )
+                if quotation_name:
+                    break
 
     if not quotation_name:
         frappe.log_error(
-            f"[sales_order.py] copy_quotation_expenses_to_sales_order: No quotation reference found")
+            f"[sales_order.py] copy_quotation_expenses_to_sales_order: No quotation reference found for {doc.name}")
         return
 
-    # Check if expenses already copied (avoid duplicate on save)
-    if hasattr(doc, '_quotation_expenses_copied'):
-        return
+    frappe.log_error(
+        f"[sales_order.py] copy_quotation_expenses_to_sales_order: Processing expenses copy for {doc.name} from Quotation {quotation_name}")
 
     # Get quotation expenses
-    quotation = frappe.get_doc("Quotation", quotation_name)
-    if not hasattr(quotation, 'custom_quotation_expenses_table') or not quotation.custom_quotation_expenses_table:
+    try:
+        quotation = frappe.get_doc("Quotation", quotation_name)
+        if not hasattr(quotation, 'custom_quotation_expenses_table') or not quotation.custom_quotation_expenses_table:
+            frappe.log_error(
+                f"[sales_order.py] copy_quotation_expenses_to_sales_order: No expenses in quotation {quotation_name}")
+            return
+
+        # Copy expenses to Sales Order
+        if not hasattr(doc, 'custom_sales_order_service_expenses_table'):
+            doc.set('custom_sales_order_service_expenses_table', [])
+
+        for expense in quotation.custom_quotation_expenses_table:
+            doc.append('custom_sales_order_service_expenses_table', {
+                'service_expense_type': expense.service_expense_type,
+                'company': expense.company,
+                'default_account': expense.default_account,
+                'amount': expense.amount,
+            })
+
+        # Mark as copied to avoid duplicates
+        doc._quotation_expenses_copied = True
         frappe.log_error(
-            f"[sales_order.py] copy_quotation_expenses_to_sales_order: No expenses in quotation {quotation_name}")
-        return
-
-    # Copy expenses to Sales Order
-    if not hasattr(doc, 'custom_sales_order_service_expenses_table'):
-        doc.set('custom_sales_order_service_expenses_table', [])
-
-    for expense in quotation.custom_quotation_expenses_table:
-        doc.append('custom_sales_order_service_expenses_table', {
-            'service_expense_type': expense.service_expense_type,
-            'company': expense.company,
-            'default_account': expense.default_account,
-            'amount': expense.amount,
-        })
-
-    # Mark as copied to avoid duplicates
-    doc._quotation_expenses_copied = True
-    frappe.log_error(
-        f"[sales_order.py] copy_quotation_expenses_to_sales_order: Copied {len(quotation.custom_quotation_expenses_table)} expense(s) from {quotation_name}")
+            f"[sales_order.py] copy_quotation_expenses_to_sales_order: Copied {len(quotation.custom_quotation_expenses_table)} expense(s) from {quotation_name}")
+    except Exception as e:
+        frappe.log_error(
+            f"[sales_order.py] copy_quotation_expenses_to_sales_order: Error copying expenses: {str(e)}")
