@@ -47,9 +47,17 @@ power_app
 │   └── make_material_request_from_quotation(source, target)
 │       └── Returns: Material Request document
 │
-└── item (power_app.item)
-    └── get_item_details(item_code)
-        └── Returns: Dict with stock, rates, supplier details
+├── item (power_app.item)
+│   └── get_item_details(item_code)
+│       └── Returns: Dict with stock, rates, supplier details
+│
+└── landed_cost_voucher (power_app.landed_cost_voucher)
+    ├── LandedCostVoucher [Class Override]
+    │   └── get_items_from_purchase_receipts() [Override]
+    │       └── Includes Service Items in addition to Stock Items and Fixed Assets
+    │
+    └── get_pr_items_extended(purchase_receipt)
+        └── Returns: List of items including Service Items
 ```
 
 ## Client-Side Functions
@@ -104,8 +112,11 @@ quotation.js
 ├── fetch_item_details(frm, item_codes)
 │   └── Returns: Promise with item details
 │
-└── build_item_details_html(item_details, currency)
-    └── Returns: HTML table for item details
+├── build_item_details_html(item_details, currency)
+│   └── Returns: HTML table for item details
+│
+└── trigger_expense_recalculation(frm)
+    └── Auto-saves form when expenses change (debounced, 500ms)
 ```
 
 ### supplier_quotation.js
@@ -226,4 +237,6 @@ Journal Entry submitted automatically
 -   Document events are registered in `hooks.py`
 -   Client-side functions are called from form handlers
 -   All API methods follow unified logging format
--   No method overrides - only document events and whitelisted methods
+-   Minimal method overrides - primarily document events and whitelisted methods
+-   Landed Cost Voucher class override extends functionality to support Service Items
+-   Real-time expense recalculation with debounced auto-save (500ms)
