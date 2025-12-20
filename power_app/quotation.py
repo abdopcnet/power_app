@@ -179,25 +179,21 @@ def add_items_from_supplier_quotations(quotation_name, selected_items):
         item_name = item_data.get("item_name")
 
         if existing_item:
-            # Update existing item: Save current rate to custom_original_rate, then update with supplier rate
-            # Step 1: Copy current rate to custom_original_rate (preserve original rate before update)
+            # Step 1: Copy current rate to custom_original_rate
             current_rate = flt(existing_item.rate) or 0.0
             existing_item.custom_original_rate = current_rate
 
-            # Step 2: Update rate field with supplier_rate from selected_items argument
+            # Step 2: Update rate with supplier_rate
             existing_item.rate = supplier_rate
             existing_item.net_rate = supplier_rate
             existing_item.amount = supplier_rate * flt(existing_item.qty)
             existing_item.net_amount = supplier_rate * flt(existing_item.qty)
-
-            # Update custom fields
             existing_item.custom_supplier_quotation = item_data.get(
                 "supplier_quotation")
-            # Note: custom_original_rate now contains the previous rate value (current_rate)
 
             items_updated += 1
             frappe.log_error(
-                f"[quotation.py] add_items_from_supplier_quotations: Updated item {item_data.get('item_code')} with rate {supplier_rate}")
+                f"[quotation.py] add_items_from_supplier_quotations: Updated item {item_data.get('item_code')} - rate: {current_rate} -> {supplier_rate}")
         else:
             # Add new item
             item_row = {
@@ -224,12 +220,12 @@ def add_items_from_supplier_quotations(quotation_name, selected_items):
             quotation.append("items", item_row)
             items_added += 1
             frappe.log_error(
-                f"[quotation.py] add_items_from_supplier_quotations: Added new item {item_data.get('item_code')} with rate {supplier_rate}")
+                f"[quotation.py] add_items_from_supplier_quotations: Added item {item_data.get('item_code')} with rate {supplier_rate}")
 
     # Save quotation
     quotation.save(ignore_permissions=True)
     frappe.log_error(
-        f"[quotation.py] add_items_from_supplier_quotations: Saved quotation - Added: {items_added}, Updated: {items_updated}")
+        f"[quotation.py] add_items_from_supplier_quotations: Saved - Added: {items_added}, Updated: {items_updated}")
 
     # Prepare message
     message_parts = []
@@ -269,48 +265,38 @@ def quotation_validate(doc, method):
         frappe.log_error(
             f"[quotation.py] quotation_validate: Total expenses: {total_expenses}")
 
-    total_item_rate = 0.00
-    total_net_item_rate = 0.00
+    # Calculate total item amount for expense distribution
     total_item_amount = 0.00
     total_net_item_amount = 0.00
-
     for i in doc.items:
-        if not hasattr(i, 'custom_sq_rate') or i.custom_sq_rate == 0:
-            i.custom_sq_rate = i.rate
-            i.custom_sq_net_rate = i.net_rate
-            i.custom_sq_amount = i.amount
-            i.custom_sq_net_amount = i.net_amount
-            total_item_rate += flt(i.rate)
-            total_net_item_rate += flt(i.net_rate)
-            total_item_amount += flt(i.amount)
-            total_net_item_amount += flt(i.net_amount)
-        else:
-            total_item_rate += flt(i.custom_sq_rate)
-            total_net_item_rate += flt(i.custom_sq_net_rate)
-            total_item_amount += flt(i.custom_sq_amount)
-            total_net_item_amount += flt(i.custom_sq_net_amount)
+        total_item_amount += flt(i.amount)
+        total_net_item_amount += flt(i.net_amount)
 
-    if total_item_amount != 0 and total_net_item_amount != 0:
+    # Distribute expenses to items
+    if total_item_amount != 0 and total_net_item_amount != 0 and total_expenses > 0:
         for i in doc.items:
-            i.rate = i.custom_sq_amount + \
-                (i.custom_sq_amount/total_item_amount * total_expenses) / i.qty
-            i.net_rate = i.custom_sq_net_amount + \
-                (i.custom_sq_net_amount/total_net_item_amount * total_expenses) / i.qty
-            i.amount = i.rate * i.qty
-            i.net_amount = i.net_rate * i.qty
+            expense_per_item = (
+                flt(i.amount) / total_item_amount * total_expenses) / flt(i.qty)
+            i.rate = flt(i.rate) + expense_per_item
+            i.net_rate = flt(i.net_rate) + (flt(i.net_amount) /
+                                            total_net_item_amount * total_expenses) / flt(i.qty)
+            i.amount = i.rate * flt(i.qty)
+            i.net_amount = i.net_rate * flt(i.qty)
 
-    if hasattr(doc, 'custom_item_margin') and doc.custom_item_margin:
+    # Apply margin if exists
+    if hasattr(doc, 'custom_item_margin') and flt(doc.custom_item_margin) != 0:
         for i in doc.items:
-            i.rate = i.rate + (i.rate * flt(doc.custom_item_margin)/100)
-            i.net_rate = i.net_rate + \
-                (i.net_rate * flt(doc.custom_item_margin)/100)
-            i.amount = i.rate * i.qty
-            i.net_amount = i.net_rate * i.qty
+            margin_amount = flt(i.rate) * flt(doc.custom_item_margin) / 100
+            i.rate = flt(i.rate) + margin_amount
+            i.net_rate = flt(i.net_rate) + (flt(i.net_rate) *
+                                            flt(doc.custom_item_margin) / 100)
+            i.amount = i.rate * flt(i.qty)
+            i.net_amount = i.net_rate * flt(i.qty)
 
     if (hasattr(doc, 'custom_quotation_expenses_table') and doc.custom_quotation_expenses_table) or \
        (hasattr(doc, 'custom_item_margin') and flt(doc.custom_item_margin) != 0):
         frappe.log_error(
-            f"[quotation.py] quotation_validate: Item rates updated for {len(doc.items)} items")
+            f"[quotation.py] quotation_validate: Rates updated for {len(doc.items)} items")
         frappe.msgprint(_("Item Rate Updated"))
 
 
