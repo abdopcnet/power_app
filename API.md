@@ -214,6 +214,17 @@ frappe.model.open_mapped_doc({
 
 **Note:** Runs before save to ensure calculated rates are saved with the document
 
+#### `before_submit`
+
+**Handler:** `power_app.quotation.quotation_before_submit`
+
+**Functionality:**
+
+-   Validates that `custom_approved` checkbox is checked before allowing submit
+-   Throws error if trying to submit without approval
+
+**Note:** Prevents submitting Quotation without approval
+
 ---
 
 ### Sales Order Events
