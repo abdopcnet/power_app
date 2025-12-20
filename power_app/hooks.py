@@ -185,11 +185,10 @@ doc_events = {
 # Overriding Methods
 # ------------------------------
 #
-# Removed override - using document events instead to extend functionality
-# This preserves ERPNext's original logic while adding custom features
-# override_whitelisted_methods = {
-# 	"erpnext.selling.doctype.quotation.quotation.make_sales_order": "power_app.overried.make_sales_order"
-# }
+# Override make_sales_order to copy expenses table from Quotation to Sales Order
+override_whitelisted_methods = {
+    "erpnext.selling.doctype.quotation.quotation.make_sales_order": "power_app.quotation_mapper.make_sales_order"
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
