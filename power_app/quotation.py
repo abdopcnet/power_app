@@ -176,7 +176,7 @@ def add_items_from_supplier_quotations(quotation_name, selected_items):
             existing_item.net_amount = supplier_rate * flt(existing_item.qty)
 
             # Update custom fields
-            existing_item.custom_supplier_quotation_name = item_data.get(
+            existing_item.custom_supplier_quotation = item_data.get(
                 "supplier_quotation")
             # Note: custom_original_rate now contains the previous rate value
 
@@ -195,7 +195,7 @@ def add_items_from_supplier_quotations(quotation_name, selected_items):
 
             # Add custom fields for supplier quotation tracking
             item_row.update({
-                "custom_supplier_quotation_name": item_data.get("supplier_quotation"),
+                "custom_supplier_quotation": item_data.get("supplier_quotation"),
                 "custom_original_rate": supplier_rate,
             })
 
