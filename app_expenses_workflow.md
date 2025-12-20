@@ -21,14 +21,28 @@ Power App implements expense allocation and distribution at the Quotation level,
     - Trigger: `Quotation.validate` event
     - Handler: `power_app.quotation.quotation_validate`
     - Logic:
-        - Calculate total expenses from `custom_quotation_expenses_table`
-        - Calculate total item amount from `items` table
-        - Distribute expenses proportionally to each item:
-            - `expense_per_item = (item_amount / total_item_amount) * total_expenses`
-            - `rate = current_rate + (expense_per_item / item_qty)`
-        - Apply margin if `custom_item_margin` exists:
-            - `rate = rate + (rate * margin_percentage / 100)`
+        1. **Restore Original Rates:**
+           - For each item, check if `custom_supplier_quotation` exists
+           - If exists: Get rate from Supplier Quotation Item
+           - If empty: Use `price_list_rate`
+           - Restore `rate` and `net_rate` to original values
+        2. **Calculate Total Expenses:**
+           - Calculate total expenses from `custom_quotation_expenses_table`
+        3. **Calculate Total Item Amount:**
+           - Calculate total item amount from `items` table (using restored rates)
+        4. **Distribute Expenses:**
+           - Distribute expenses proportionally to each item:
+             - `expense_per_item = (item_amount / total_item_amount) * total_expenses`
+             - `rate = original_rate + (expense_per_item / item_qty)`
+        5. **Apply Margin:**
+           - If `custom_item_margin` exists:
+             - `rate = rate + (rate * margin_percentage / 100)`
     - Updates: `rate`, `net_rate`, `amount`, `net_amount` fields
+    - **Real-time Recalculation:**
+        - Event handlers on Service Expense table changes
+        - Auto-save after 500ms debounce when expenses are modified
+        - Rates update automatically without manual save
+    - **Note:** When expenses are deleted/changed, rates automatically return to original values
 
 ### Phase 2: Sales Order Creation
 
@@ -99,19 +113,47 @@ Power App implements expense allocation and distribution at the Quotation level,
 ### Expense Distribution Formula
 
 ```python
-# Calculate total expenses
+# Step 1: Restore original rates
+for item in items:
+    original_rate = None
+    
+    # Check if item has supplier quotation
+    if item.custom_supplier_quotation:
+        # Get rate from Supplier Quotation Item
+        sq_items = frappe.get_all(
+            "Supplier Quotation Item",
+            filters={
+                "parent": item.custom_supplier_quotation,
+                "item_code": item.item_code
+            },
+            fields=["rate"],
+            limit=1
+        )
+        if sq_items:
+            original_rate = sq_items[0].rate
+    
+    # If no supplier quotation, use price_list_rate
+    if not original_rate:
+        original_rate = item.price_list_rate or item.rate
+    
+    # Restore original rate
+    item.rate = original_rate
+    item.net_rate = original_rate
+
+# Step 2: Calculate total expenses
 total_expenses = sum(expense.amount for expense in custom_quotation_expenses_table)
 
-# Calculate total item amount
+# Step 3: Calculate total item amount (using restored rates)
 total_item_amount = sum(item.amount for item in items)
 
-# Distribute to each item
+# Step 4: Distribute expenses to items
 for item in items:
     expense_per_item = (item.amount / total_item_amount) * total_expenses
     item.rate = item.rate + (expense_per_item / item.qty)
 
-    # Apply margin if exists
-    if custom_item_margin:
+# Step 5: Apply margin if exists
+if custom_item_margin:
+    for item in items:
         item.rate = item.rate + (item.rate * custom_item_margin / 100)
 ```
 
@@ -128,6 +170,9 @@ Journal Entry:
 
 -   Expenses are distributed proportionally based on item amounts
 -   Distribution happens on every save (validate event)
+-   Real-time recalculation when expenses are modified/deleted (500ms debounce)
 -   Expenses are copied only once when creating Sales Order from Quotation
 -   Journal Entry is created automatically on Sales Order submit
 -   All logic uses document events (no method overrides)
+-   Service Expense Table is used at Quotation level (before purchase)
+-   Landed Cost Voucher can be used after Purchase Receipt (supports Service Items via override)
