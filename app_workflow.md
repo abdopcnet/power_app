@@ -178,7 +178,7 @@ Quotation (Submitted)
 | --------------------------------- | ------------------------------------------- |
 | `custom_quotation_expenses_table` | `custom_sales_order_service_expenses_table` |
 | `service_expense_type`            | `service_expense_type`                      |
-| `compnay` (Note: Typo in JSON)    | `compnay` (Note: Typo in JSON)              |
+| `company`                         | `company`                                   |
 | `default_account`                 | `default_account`                           |
 | `amount`                          | `amount`                                    |
 
