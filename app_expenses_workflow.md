@@ -13,7 +13,7 @@ Power App implements expense allocation and distribution at the Quotation level,
     - User adds expense rows in `custom_quotation_expenses_table`
     - Each expense row contains:
         - `service_expense_type` (Link) - Type of expense
-        - `compnay` (Link) - Company (Note: Typo in JSON field name, kept as-is for compatibility)
+        - `company` (Link) - Company
         - `default_account` (Link) - Expense account (Debit in Journal Entry)
         - `amount` (Currency) - Expense amount
 
@@ -41,7 +41,7 @@ Power App implements expense allocation and distribution at the Quotation level,
         - Copy `custom_quotation_expenses_table` → `custom_sales_order_service_expenses_table`
         - Fields copied:
             - `service_expense_type`
-            - `compnay` (Note: Typo in JSON field name, kept as-is)
+            - `company`
             - `default_account`
             - `amount`
     - Prevents duplicate copying with `_quotation_expenses_copied` flag
@@ -68,7 +68,7 @@ Power App implements expense allocation and distribution at the Quotation level,
 | --------------------------------- | ------------------------------------------- |
 | `custom_quotation_expenses_table` | `custom_sales_order_service_expenses_table` |
 | `service_expense_type`            | `service_expense_type`                      |
-| `compnay` (Note: Typo in JSON)    | `compnay` (Note: Typo in JSON)              |
+| `company`                         | `company`                                   |
 | `default_account`                 | `default_account`                           |
 | `amount`                          | `amount`                                    |
 
