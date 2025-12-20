@@ -36,6 +36,7 @@ Power App is a Frappe/ERPNext customization for intermediary service companies. 
 -   Select items from multiple supplier quotations
 -   Add selected items to customer quotation
 -   Track supplier rates and original rates
+-   Read-only view for submitted quotations
 
 ### 2. Expense Allocation
 
@@ -55,11 +56,19 @@ Power App is a Frappe/ERPNext customization for intermediary service companies. 
 -   Filter by Material Request/RFQ
 -   Select Material Request if multiple exist
 
+### 5. Approved Workflow
+
+-   Approved checkbox required before submitting Quotation
+-   Submit button visibility controlled by Approved status
+-   Read-only item selection after submission
+-   Standard ERPNext Sales Order creation from submitted Quotation
+
 ## Document Events
 
 ### Quotation
 
 -   `validate`: Calculate expense allocation and item rates (`quotation.py::quotation_validate`)
+-   `before_submit`: Validate Approved checkbox before submit (`quotation.py::quotation_before_submit`)
 
 ### Sales Order
 
@@ -98,14 +107,20 @@ Request for Quotation (RFQ)
     ↓
 Supplier Quotations (Multiple)
     ↓
-Select Items from Supplier Quotations
+Select Items from Supplier Quotations (Full functionality)
     ↓
 Update Customer Quotation with Selected Items
     ↓
 Add Expenses
     ↓
-Submit Customer Quotation
+Check Approved
     ↓
+Submit Customer Quotation (Only if Approved = 1)
+    ↓
+Customer Quotation (Submitted)
+    ├── View Supplier Quotation Items (Read-only)
+    └── Create Sales Order (Standard ERPNext)
+        ↓
 Sales Order → Delivery Note → Sales Invoice
 ```
 
