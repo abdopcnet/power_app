@@ -144,6 +144,7 @@ doctype_js = {
 doc_events = {
     "Quotation": {
         "validate": "power_app.quotation.quotation_validate",
+        "before_submit": "power_app.quotation.quotation_before_submit",
         # "on_cancel": "method",
         # "on_trash": "method"
     },
