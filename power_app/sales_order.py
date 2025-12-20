@@ -126,7 +126,7 @@ def copy_quotation_expenses_to_sales_order(doc, method):
     for expense in quotation.custom_quotation_expenses_table:
         doc.append('custom_sales_order_service_expenses_table', {
             'service_expense_type': expense.service_expense_type,
-            'compnay': expense.compnay,
+            'company': expense.company,
             'default_account': expense.default_account,
             'amount': expense.amount,
         })
