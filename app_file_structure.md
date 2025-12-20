@@ -12,6 +12,7 @@ power_app/
 │   ├── supplier_quotation.py          # Supplier Quotation functions
 │   ├── material_request.py            # Material Request mapping
 │   ├── item.py                        # Item details functions
+│   ├── landed_cost_voucher.py         # Landed Cost Voucher override (Service Items support)
 │   ├── config/                        # Configuration files
 │   ├── power_app/                     # Custom DocTypes
 │   │   ├── doctype/
@@ -84,6 +85,7 @@ power_app/
 -   **Configuration:**
     -   `doctype_js` - Maps DocTypes to JavaScript files
     -   `doc_events` - Document event handlers
+    -   `override_doctype_class` - Override standard DocType classes
 
 ### JavaScript Files
 
@@ -100,6 +102,7 @@ power_app/
     -   `show_item_selection_dialog_readonly()` - Read-only item view dialog
     -   `build_supplier_items_table_html()` - Table with checkboxes
     -   `build_supplier_items_table_html_readonly()` - Table without checkboxes
+    -   `trigger_expense_recalculation()` - Auto-save on expense changes (debounced)
 
 #### `power_app/public/js/supplier_quotation.js`
 
@@ -118,7 +121,7 @@ power_app/
 #### `power_app/power_app/custom/quotation_item.json`
 
 -   Custom fields for Quotation Item DocType
--   Fields: `custom_supplier_quotation`, `custom_original_rate`, `custom_item_expense_amount`
+-   Fields: `custom_supplier_quotation`, `custom_item_expense_amount`
 
 #### `power_app/power_app/custom/sales_order.json`
 
@@ -162,4 +165,6 @@ power_app/
 -   All code follows AGENTS.md guidelines
 -   Code comments and documentation in English
 -   User-facing messages preserve original language
--   No method overrides - only document events
+-   No method overrides - only document events (except Landed Cost Voucher class override)
+-   Landed Cost Voucher override extends functionality to support Service Items
+-   Service Expense Table is still required for Quotation-level expenses (before purchase)
