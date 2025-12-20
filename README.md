@@ -1,6 +1,6 @@
 # Power App - Documentation
 
-![Version](https://img.shields.io/badge/version-19.12.2025-blue)
+![Version](https://img.shields.io/badge/version-20.12.2025-blue)
 
 ## Overview
 
