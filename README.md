@@ -67,7 +67,7 @@ Power App is a Frappe/ERPNext customization for intermediary service companies. 
 -   Rates automatically restore to original when expenses are removed
 -   Margin can be applied after expense distribution
 
-**Table:** `custom_quotation_expenses_table` (Service Expense)
+**Table:** `custom_service_expense_table` (Service Expense)
 
 ---
 
