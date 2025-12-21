@@ -540,8 +540,8 @@ Quotation (Draft)
 
     - `frappe.ui.form.on('Service Expense', ...)` handlers
     - `amount` - Triggers recalculation when expense amount changes
-    - `custom_quotation_expenses_table_add` - Triggers when expense row added
-    - `custom_quotation_expenses_table_remove` - Triggers when expense row removed
+    - `custom_service_expense_table_add` - Triggers when expense row added
+    - `custom_service_expense_table_remove` - Triggers when expense row removed
 
 2. **Debounce Mechanism:**
 
