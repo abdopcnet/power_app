@@ -316,13 +316,31 @@ def quotation_validate(doc, method):
     # Step 4: Distribute expenses to items
     if total_item_amount != 0 and total_net_item_amount != 0 and total_expenses > 0:
         for i in doc.items:
+            # Calculate expense per unit
             expense_per_item = (
                 flt(i.amount) / total_item_amount * total_expenses) / flt(i.qty)
+            # Calculate total expense amount for this item
+            expense_amount_for_item = expense_per_item * flt(i.qty)
+
+            # Update rate with expense
             i.rate = flt(i.rate) + expense_per_item
             i.net_rate = flt(i.net_rate) + (flt(i.net_amount) /
                                             total_net_item_amount * total_expenses) / flt(i.qty)
             i.amount = i.rate * flt(i.qty)
             i.net_amount = i.net_rate * flt(i.qty)
+
+            # Store expense amount in custom field
+            if hasattr(i, 'custom_item_expense_amount'):
+                i.custom_item_expense_amount = expense_amount_for_item
+                frappe.log_error(
+                    f"[quotation.py] quotation_validate: Item {i.item_code} - Expense amount: {expense_amount_for_item}")
+    else:
+        # If no expenses, reset custom_item_expense_amount to 0
+        for i in doc.items:
+            if hasattr(i, 'custom_item_expense_amount'):
+                i.custom_item_expense_amount = 0
+                frappe.log_error(
+                    f"[quotation.py] quotation_validate: Item {i.item_code} - Expense amount reset to 0")
 
     # Step 5: Apply margin if exists
     if hasattr(doc, 'custom_item_margin') and flt(doc.custom_item_margin) != 0:
