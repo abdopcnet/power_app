@@ -28,13 +28,17 @@ power_app
 │       └── Purpose: Validate Approved checkbox
 │
 ├── sales_order (power_app.sales_order)
-│   ├── copy_quotation_expenses_to_sales_order(doc, method) [Document Event]
-│   │   └── Event: Sales Order.before_save
-│   │   └── Purpose: Copy expenses from Quotation
-│   │
 │   └── create_je_from_service_expence(doc, method) [Document Event]
 │       └── Event: Sales Order.on_submit
 │       └── Purpose: Create Journal Entry for expenses
+│
+├── quotation_mapper (power_app.quotation_mapper)
+│   ├── make_sales_order(source_name, target_doc, args) [Whitelisted Override]
+│   │   └── Override: erpnext.selling.doctype.quotation.quotation.make_sales_order
+│   │   └── Purpose: Copy expenses table from Quotation to Sales Order
+│   │
+│   └── _make_sales_order(source_name, target_doc, ignore_permissions, args)
+│       └── Extended mapper with expense table copying in set_missing_values
 │
 ├── supplier_quotation (power_app.supplier_quotation)
 │   ├── check_quotation_linked(doc)
@@ -73,7 +77,7 @@ quotation.js
 │   └── Set item query filters
 │
 ├── add_show_item_history_button(frm)
-│   └── Shows item price & stock details dialog
+│   └── Shows styled item price & stock details dialog
 │
 ├── add_compare_supplier_quotations_button(frm)
 │   └── Opens Supplier Quotation Comparison report
@@ -113,7 +117,7 @@ quotation.js
 │   └── Returns: Promise with item details
 │
 ├── build_item_details_html(item_details, currency)
-│   └── Returns: HTML table for item details
+│   └── Returns: Styled HTML table for item details with CSS
 │
 └── trigger_expense_recalculation(frm)
     └── Auto-saves form when expenses change (debounced, 500ms)
@@ -148,13 +152,11 @@ Document Events
 │           └── Validate custom_approved checkbox
 │
 └── Sales Order
-    ├── before_save
-    │   └── power_app.sales_order.copy_quotation_expenses_to_sales_order
-    │       └── Copy expenses from Quotation
-    │
     └── on_submit
         └── power_app.sales_order.create_je_from_service_expence
             └── Create Journal Entry for expenses
+
+Note: Expenses table is copied via override in quotation_mapper.py (make_sales_order), not via before_save event
 ```
 
 ## API Call Flow Examples
@@ -212,13 +214,15 @@ Document saved with updated rates
 ```
 User creates Sales Order from Quotation
     ↓
-Sales Order.before_save event triggered
+quotation_mapper.py: make_sales_order() [Override]
     ↓
-sales_order.py: copy_quotation_expenses_to_sales_order()
+quotation_mapper.py: _make_sales_order()
     ↓
-Copy expenses from Quotation to Sales Order
+get_mapped_doc() with set_missing_values()
     ↓
-Sales Order saved
+set_missing_values() copies expenses table ✅
+    ↓
+Sales Order opens with expenses table filled
     ↓
 User submits Sales Order
     ↓
