@@ -10,7 +10,7 @@ Power App implements expense allocation and distribution at the Quotation level,
 
 1. **Add Expenses to Quotation**
 
-    - User adds expense rows in `custom_quotation_expenses_table`
+    - User adds expense rows in `custom_service_expense_table`
     - Each expense row contains:
         - `service_expense_type` (Link) - Type of expense
         - `company` (Link) - Company
@@ -22,23 +22,23 @@ Power App implements expense allocation and distribution at the Quotation level,
     - Handler: `power_app.quotation.quotation_validate`
     - Logic:
         1. **Restore Original Rates:**
-           - For each item, check if `custom_supplier_quotation` exists
-           - If exists: Get rate from Supplier Quotation Item
-           - If empty: Use `price_list_rate`
-           - Restore `rate` and `net_rate` to original values
+            - For each item, check if `custom_supplier_quotation` exists
+            - If exists: Get rate from Supplier Quotation Item
+            - If empty: Use `price_list_rate`
+            - Restore `rate` and `net_rate` to original values
         2. **Calculate Total Expenses:**
-           - Calculate total expenses from `custom_quotation_expenses_table`
+            - Calculate total expenses from `custom_service_expense_table`
         3. **Calculate Total Item Amount:**
-           - Calculate total item amount from `items` table (using restored rates)
+            - Calculate total item amount from `items` table (using restored rates)
         4. **Distribute Expenses:**
-           - Distribute expenses proportionally to each item:
-             - `expense_per_item = (item_amount / total_item_amount) * total_expenses`
-             - `expense_amount_for_item = expense_per_item * item_qty`
-             - `rate = original_rate + (expense_per_item / item_qty)`
-             - `custom_item_expense_amount = expense_amount_for_item` (total expense for this item)
+            - Distribute expenses proportionally to each item:
+                - `expense_per_item = (item_amount / total_item_amount) * total_expenses`
+                - `expense_amount_for_item = expense_per_item * item_qty`
+                - `rate = original_rate + (expense_per_item / item_qty)`
+                - `custom_item_expense_amount = expense_amount_for_item` (total expense for this item)
         5. **Apply Margin:**
-           - If `custom_item_margin` exists:
-             - `rate = rate + (rate * margin_percentage / 100)`
+            - If `custom_item_margin` exists:
+                - `rate = rate + (rate * margin_percentage / 100)`
     - Updates: `rate`, `net_rate`, `amount`, `net_amount`, `custom_item_expense_amount` fields
     - **Note:** If no expenses exist, `custom_item_expense_amount` is reset to 0
     - **Real-time Recalculation:**
@@ -81,13 +81,13 @@ Power App implements expense allocation and distribution at the Quotation level,
 
 ### Quotation → Sales Order
 
-| Quotation Field                   | Sales Order Field                           |
-| --------------------------------- | ------------------------------------------- |
-| `custom_quotation_expenses_table` | `custom_sales_order_service_expenses_table` |
-| `service_expense_type`            | `service_expense_type`                      |
-| `company`                         | `company`                                   |
-| `default_account`                 | `default_account`                           |
-| `amount`                          | `amount`                                    |
+| Quotation Field                | Sales Order Field                           |
+| ------------------------------ | ------------------------------------------- |
+| `custom_service_expense_table` | `custom_sales_order_service_expenses_table` |
+| `service_expense_type`         | `service_expense_type`                      |
+| `company`                      | `company`                                   |
+| `default_account`              | `default_account`                           |
+| `amount`                       | `amount`                                    |
 
 ### Sales Order → Journal Entry
 
@@ -100,7 +100,7 @@ Power App implements expense allocation and distribution at the Quotation level,
 
 ### Quotation
 
--   `custom_quotation_expenses_table` (Table: Service Expense) - Expense entries
+-   `custom_service_expense_table` (Table: Service Expense) - Expense entries
 -   `custom_item_margin` (Float) - Margin percentage applied to items
 
 ### Sales Order
@@ -144,7 +144,7 @@ for item in items:
     item.net_rate = original_rate
 
 # Step 2: Calculate total expenses
-total_expenses = sum(expense.amount for expense in custom_quotation_expenses_table)
+total_expenses = sum(expense.amount for expense in custom_service_expense_table)
 
 # Step 3: Calculate total item amount (using restored rates)
 total_item_amount = sum(item.amount for item in items)
