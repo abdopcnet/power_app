@@ -149,7 +149,8 @@ doc_events = {
         # "on_trash": "method"
     },
     "Sales Order": {
-        "before_save": "power_app.sales_order.copy_quotation_expenses_to_sales_order",
+        # Expenses are copied via override in quotation_mapper.py (make_sales_order)
+        # before_save removed to prevent duplicate expense rows on every save
         "on_submit": "power_app.sales_order.create_je_from_service_expence",
         # "on_cancel": "method",
         # "on_trash": "method"
