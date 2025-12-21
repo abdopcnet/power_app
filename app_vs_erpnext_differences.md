@@ -37,11 +37,11 @@ This document highlights the key differences between Power App workflow and stan
 
 **Location:** Sales Side (Quotation Level)
 
--   **Custom Expense Table** (`custom_quotation_expenses_table`) is used
+-   **Custom Expense Table** (`custom_service_expense_table`) is used
 -   **Timing:** Expenses are added **at Quotation stage** (before purchase)
 -   **Process:**
     1. Create Customer Quotation (Draft)
-    2. Add expenses in `custom_quotation_expenses_table`
+    2. Add expenses in `custom_service_expense_table`
     3. On save (validate event), expenses are automatically distributed to items
     4. Expenses are included in item rates immediately
     5. Expenses are copied to Sales Order when created
