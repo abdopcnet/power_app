@@ -9,7 +9,7 @@ def get_supplier_quotation_items(quotation_name):
     Get all items from supplier quotations linked to this customer quotation
 
     Linking method: Via Material Request
-    1. Customer Quotation → Material Request (via custom_dc_refrance)
+    1. Customer Quotation → Material Request (via custom_quotation_refrence)
     2. Material Request → Supplier Quotation Items (via material_request field)
 
     Returns list of supplier quotation items with supplier details
@@ -17,7 +17,7 @@ def get_supplier_quotation_items(quotation_name):
     # Get Material Request linked to Customer Quotation
     mr_list = frappe.get_all(
         "Material Request",
-        filters={"custom_dc_refrance": quotation_name},
+        filters={"custom_quotation_refrence": quotation_name},
         fields=["name"]
     )
 
@@ -80,7 +80,7 @@ def get_material_requests_from_quotation(quotation_name):
     # Get Material Requests linked to Customer Quotation
     mr_list = frappe.get_all(
         "Material Request",
-        filters={"custom_dc_refrance": quotation_name},
+        filters={"custom_quotation_refrence": quotation_name},
         fields=["name", "transaction_date", "status", "material_request_type"]
     )
 
@@ -300,8 +300,8 @@ def quotation_validate(doc, method):
 
     # Step 2: Calculate total expenses
     total_expenses = 0.00
-    if hasattr(doc, 'custom_quotation_expenses_table') and doc.custom_quotation_expenses_table:
-        for i in doc.custom_quotation_expenses_table:
+    if hasattr(doc, 'custom_service_expense_table') and doc.custom_service_expense_table:
+        for i in doc.custom_service_expense_table:
             total_expenses += flt(i.amount)
         frappe.log_error(
             f"[quotation.py] quotation_validate: Total expenses: {total_expenses}")
@@ -352,7 +352,7 @@ def quotation_validate(doc, method):
             i.amount = i.rate * flt(i.qty)
             i.net_amount = i.net_rate * flt(i.qty)
 
-    if (hasattr(doc, 'custom_quotation_expenses_table') and doc.custom_quotation_expenses_table) or \
+    if (hasattr(doc, 'custom_service_expense_table') and doc.custom_service_expense_table) or \
        (hasattr(doc, 'custom_item_margin') and flt(doc.custom_item_margin) != 0):
         frappe.log_error(
             f"[quotation.py] quotation_validate: Rates updated for {len(doc.items)} items")
