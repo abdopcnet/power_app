@@ -13,6 +13,7 @@ power_app/
 │   ├── material_request.py            # Material Request mapping
 │   ├── item.py                        # Item details functions
 │   ├── landed_cost_voucher.py         # Landed Cost Voucher override (Service Items support)
+│   ├── quotation_mapper.py            # Override make_sales_order to copy expenses table
 │   ├── config/                        # Configuration files
 │   ├── power_app/                     # Custom DocTypes
 │   │   ├── doctype/
@@ -57,8 +58,15 @@ power_app/
 
 -   **Purpose:** Sales Order document events
 -   **Functions:**
-    -   `copy_quotation_expenses_to_sales_order()` - Document event: Copy expenses
     -   `create_je_from_service_expence()` - Document event: Create Journal Entry
+    -   `copy_quotation_expenses_to_sales_order()` - Legacy function (not used, expenses copied via mapper)
+
+#### `power_app/quotation_mapper.py`
+
+-   **Purpose:** Override make_sales_order to copy expenses table
+-   **Functions:**
+    -   `make_sales_order()` - Override: Whitelisted method override
+    -   `_make_sales_order()` - Extended mapper with expense table copying
 
 #### `power_app/supplier_quotation.py`
 
@@ -86,6 +94,7 @@ power_app/
     -   `doctype_js` - Maps DocTypes to JavaScript files
     -   `doc_events` - Document event handlers
     -   `override_doctype_class` - Override standard DocType classes
+    -   `override_whitelisted_methods` - Override whitelisted methods (make_sales_order)
 
 ### JavaScript Files
 
@@ -94,7 +103,7 @@ power_app/
 -   **Purpose:** Quotation form client-side logic
 -   **Key Functions:**
     -   `refresh()` - Form refresh handler
-    -   `add_show_item_history_button()` - Item history button
+    -   `add_show_item_history_button()` - Item history button (styled dialog)
     -   `add_compare_supplier_quotations_button()` - Comparison report button
     -   `add_select_items_from_supplier_quotations_button()` - Item selection button
     -   `make_MR()` - Material Request button
@@ -102,6 +111,7 @@ power_app/
     -   `show_item_selection_dialog_readonly()` - Read-only item view dialog
     -   `build_supplier_items_table_html()` - Table with checkboxes
     -   `build_supplier_items_table_html_readonly()` - Table without checkboxes
+    -   `build_item_details_html()` - Styled item price & stock details table
     -   `trigger_expense_recalculation()` - Auto-save on expense changes (debounced)
 
 #### `power_app/public/js/supplier_quotation.js`
@@ -165,6 +175,7 @@ power_app/
 -   All code follows AGENTS.md guidelines
 -   Code comments and documentation in English
 -   User-facing messages preserve original language
--   No method overrides - only document events (except Landed Cost Voucher class override)
+-   Minimal method overrides - primarily document events
 -   Landed Cost Voucher override extends functionality to support Service Items
+-   make_sales_order override copies expenses table from Quotation to Sales Order
 -   Service Expense Table is still required for Quotation-level expenses (before purchase)
