@@ -130,14 +130,14 @@ frappe.ui.form.on('Service Expense', {
 			trigger_expense_recalculation(frm);
 		}
 	},
-	custom_quotation_expenses_table_add: function (frm, cdt, cdn) {
+	custom_service_expense_table_add: function (frm, cdt, cdn) {
 		// When expense row is added, trigger recalculation
 		if (frm.doc.docstatus === 0 && !frm.is_new()) {
 			console.log('[quotation.js] (Expense row added)');
 			trigger_expense_recalculation(frm);
 		}
 	},
-	custom_quotation_expenses_table_remove: function (frm, cdt, cdn) {
+	custom_service_expense_table_remove: function (frm, cdt, cdn) {
 		// When expense row is removed, trigger recalculation
 		if (frm.doc.docstatus === 0 && !frm.is_new()) {
 			console.log('[quotation.js] (Expense row removed)');
@@ -673,13 +673,16 @@ function show_item_selection_dialog_content_readonly(frm, items) {
 			{
 				fieldtype: 'HTML',
 				fieldname: 'items_table_html',
-				options: html,
+				options: '',
 			},
 		],
 		// No primary_action - read-only view
 	});
 
 	d.show();
+	if (d.fields_dict.items_table_html && d.fields_dict.items_table_html.$wrapper) {
+		d.fields_dict.items_table_html.$wrapper.html(html);
+	}
 }
 
 // Function to display items in dialog (Step 5 - with multi-select enabled)
@@ -695,7 +698,7 @@ function show_item_selection_dialog_content(frm, items) {
 			{
 				fieldtype: 'HTML',
 				fieldname: 'items_table_html',
-				options: html,
+				options: '',
 			},
 		],
 		primary_action_label: __('Add Selected Items'),
@@ -751,10 +754,13 @@ function show_item_selection_dialog_content(frm, items) {
 		},
 	});
 
+	d.show();
+	if (d.fields_dict.items_table_html && d.fields_dict.items_table_html.$wrapper) {
+		d.fields_dict.items_table_html.$wrapper.html(html);
+	}
+
 	// Enable checkboxes and add select all functionality
 	setup_item_selection_checkboxes(d, items.length);
-
-	d.show();
 }
 
 // Function to setup checkboxes and select all functionality (Step 5)
