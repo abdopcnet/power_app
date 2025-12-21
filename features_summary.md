@@ -30,7 +30,7 @@ Frappe/ERPNext customization for intermediary service companies. Extends ERPNext
 **Quotation:**
 
 -   `custom_approved` (Check)
--   `custom_quotation_expenses_table` (Table: Service Expense)
+-   `custom_service_expense_table` (Table: Service Expense)
 -   `custom_item_margin` (Float)
 
 **Quotation Item:**
