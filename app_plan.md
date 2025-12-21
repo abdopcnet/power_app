@@ -558,6 +558,93 @@ Quotation (Draft)
 
 ---
 
+## Step 19: Fix Expenses Table Copy to Sales Order
+
+**Status:** ✅ **COMPLETED**
+
+**What Was Done:**
+
+1. **Created `quotation_mapper.py`:**
+
+    - Override `make_sales_order` method to copy expenses table
+    - Added expenses table copying in `set_missing_values` function
+    - Prevents duplicate rows by checking if table is empty before copying
+
+2. **Updated `hooks.py`:**
+
+    - Added `override_whitelisted_methods` configuration
+    - Registered override: `"erpnext.selling.doctype.quotation.quotation.make_sales_order": "power_app.quotation_mapper.make_sales_order"`
+    - Removed `before_save` event handler to prevent duplicate expense rows
+
+3. **Improved `copy_quotation_expenses_to_sales_order`:**
+    - Enhanced to try multiple methods to get Quotation reference
+    - Added better error handling and logging
+
+**Result:** Expenses table is now copied correctly when creating Sales Order from Quotation, without duplicates on subsequent saves.
+
+**Note:** `before_save` event handler was removed because expenses are now copied directly in the mapper, preventing duplicate rows on every save.
+
+---
+
+## Step 20: Improve Item History Dialog Styling
+
+**Status:** ✅ **COMPLETED**
+
+**What Was Done:**
+
+1. **Enhanced `build_item_details_html()` function:**
+
+    - Added custom CSS for better visual appearance
+    - Fixed column width distribution (was 25% x 5 = 125%, now properly distributed: 20%, 15%, 20%, 20%, 25%)
+    - Added hover effects on table rows for better UX
+    - Improved spacing and padding throughout
+    - Added styled note section with blue left border
+    - Better text alignment (right for currency, center for quantities)
+    - Added HTML escaping for security (XSS prevention using `frappe.utils.escape_html`)
+
+2. **Visual Improvements:**
+    - Professional color scheme (blue header #1c5cab matching ERPNext theme)
+    - Box shadow for table depth and visual separation
+    - Smooth hover transitions on table rows
+    - Responsive table layout
+    - Better typography and spacing
+    - Container with background color for better visual hierarchy
+
+**Result:** Item History dialog now displays with professional, organized styling that matches ERPNext's design language and provides better user experience.
+
+---
+
+## Step 21: Fix custom_item_expense_amount Field Update
+
+**Status:** ✅ **COMPLETED**
+
+**What Was Done:**
+
+1. **Updated `quotation_validate()` function:**
+
+    - Added calculation of `expense_amount_for_item` (total expense for each item)
+    - Added update of `custom_item_expense_amount` field when expenses are distributed
+    - Added reset of `custom_item_expense_amount` to 0 when no expenses exist
+    - Added logging to track expense amount updates
+
+2. **Logic:**
+
+    - When expenses are distributed:
+        - `expense_per_item = (item_amount / total_item_amount) * total_expenses / item_qty`
+        - `expense_amount_for_item = expense_per_item * item_qty` (total expense for the item)
+        - `custom_item_expense_amount = expense_amount_for_item`
+    - When no expenses exist:
+        - `custom_item_expense_amount = 0` (reset to zero)
+
+3. **Field Behavior:**
+    - `custom_item_expense_amount` now automatically updates when expenses are added/modified/deleted
+    - Shows the total expense amount allocated to each item
+    - Updates in real-time with expense recalculation (500ms debounce)
+
+**Result:** `custom_item_expense_amount` field now correctly stores the expense amount allocated to each item, updating automatically when expenses are distributed.
+
+---
+
 ## Implementation Checklist
 
 -   [x] Step 1: Add Custom Fields (You do JSON modification)
@@ -576,3 +663,6 @@ Quotation (Draft)
 -   [x] Step 16: Unified Logging Implementation (I add logging to all files)
 -   [x] Step 17: Landed Cost Voucher Override for Service Items (I add override class)
 -   [x] Step 18: Real-time Expense Recalculation (I add auto-save on expense changes)
+-   [x] Step 19: Fix Expenses Table Copy to Sales Order (I add mapper override)
+-   [x] Step 20: Improve Item History Dialog Styling (I add CSS and better formatting)
+-   [x] Step 21: Fix custom_item_expense_amount Field Update (I add field update in expense distribution)
