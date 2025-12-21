@@ -33,11 +33,14 @@ Power App implements expense allocation and distribution at the Quotation level,
         4. **Distribute Expenses:**
            - Distribute expenses proportionally to each item:
              - `expense_per_item = (item_amount / total_item_amount) * total_expenses`
+             - `expense_amount_for_item = expense_per_item * item_qty`
              - `rate = original_rate + (expense_per_item / item_qty)`
+             - `custom_item_expense_amount = expense_amount_for_item` (total expense for this item)
         5. **Apply Margin:**
            - If `custom_item_margin` exists:
              - `rate = rate + (rate * margin_percentage / 100)`
-    - Updates: `rate`, `net_rate`, `amount`, `net_amount` fields
+    - Updates: `rate`, `net_rate`, `amount`, `net_amount`, `custom_item_expense_amount` fields
+    - **Note:** If no expenses exist, `custom_item_expense_amount` is reset to 0
     - **Real-time Recalculation:**
         - Event handlers on Service Expense table changes
         - Auto-save after 500ms debounce when expenses are modified
@@ -47,18 +50,18 @@ Power App implements expense allocation and distribution at the Quotation level,
 ### Phase 2: Sales Order Creation
 
 3. **Copy Expenses to Sales Order**
-    - Trigger: `Sales Order.before_save` event
-    - Handler: `power_app.sales_order.copy_quotation_expenses_to_sales_order`
+    - Trigger: `make_sales_order` method override (via mapper)
+    - Handler: `power_app.quotation_mapper._make_sales_order`
     - Logic:
-        - Check if Sales Order created from Quotation
-        - Get Quotation reference from `items[].quotation_item`
-        - Copy `custom_quotation_expenses_table` → `custom_sales_order_service_expenses_table`
+        - Override `make_sales_order` method in `quotation_mapper.py`
+        - Copy expenses in `set_missing_values` function during document mapping
+        - Only copy if `custom_sales_order_service_expenses_table` is empty (prevents duplicates)
         - Fields copied:
             - `service_expense_type`
             - `company`
             - `default_account`
             - `amount`
-    - Prevents duplicate copying with `_quotation_expenses_copied` flag
+    - **Note:** `before_save` event handler was removed to prevent duplicate rows on every save
 
 ### Phase 3: Sales Order Submission
 
@@ -116,7 +119,7 @@ Power App implements expense allocation and distribution at the Quotation level,
 # Step 1: Restore original rates
 for item in items:
     original_rate = None
-    
+
     # Check if item has supplier quotation
     if item.custom_supplier_quotation:
         # Get rate from Supplier Quotation Item
@@ -131,11 +134,11 @@ for item in items:
         )
         if sq_items:
             original_rate = sq_items[0].rate
-    
+
     # If no supplier quotation, use price_list_rate
     if not original_rate:
         original_rate = item.price_list_rate or item.rate
-    
+
     # Restore original rate
     item.rate = original_rate
     item.net_rate = original_rate
@@ -149,7 +152,9 @@ total_item_amount = sum(item.amount for item in items)
 # Step 4: Distribute expenses to items
 for item in items:
     expense_per_item = (item.amount / total_item_amount) * total_expenses
+    expense_amount_for_item = expense_per_item * item.qty
     item.rate = item.rate + (expense_per_item / item.qty)
+    item.custom_item_expense_amount = expense_amount_for_item
 
 # Step 5: Apply margin if exists
 if custom_item_margin:
@@ -171,8 +176,9 @@ Journal Entry:
 -   Expenses are distributed proportionally based on item amounts
 -   Distribution happens on every save (validate event)
 -   Real-time recalculation when expenses are modified/deleted (500ms debounce)
--   Expenses are copied only once when creating Sales Order from Quotation
+-   Expenses are copied via mapper override when creating Sales Order from Quotation
+-   Duplicate prevention: Only copy if expenses table is empty
 -   Journal Entry is created automatically on Sales Order submit
--   All logic uses document events (no method overrides)
+-   Minimal method overrides - primarily document events
 -   Service Expense Table is used at Quotation level (before purchase)
 -   Landed Cost Voucher can be used after Purchase Receipt (supports Service Items via override)
