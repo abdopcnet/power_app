@@ -250,29 +250,30 @@ This document highlights the key differences between Power App workflow and stan
 -   **Minimal method overrides** - primarily document events
 -   All custom logic uses:
     -   `validate` event for calculations
-    -   `before_save` event for copying data
     -   `before_submit` event for validation
     -   `on_submit` event for Journal Entry creation
--   **Exception:** Landed Cost Voucher class override to support Service Items
+-   **Exceptions:**
+    -   Landed Cost Voucher class override to support Service Items
+    -   `make_sales_order` method override to copy expenses table
 -   Preserves ERPNext's original logic while extending functionality
 
 ---
 
 ## Summary Table
 
-| Feature                            | Original ERPNext                       | Power App                               |
-| ---------------------------------- | -------------------------------------- | --------------------------------------- |
-| **Expense Location**               | Purchase Receipt (Landed Cost Voucher) | Quotation (Custom Table)                |
-| **Expense Timing**                 | After goods received                   | At Quotation stage                      |
-| **Expense Distribution**           | Manual via Landed Cost Voucher         | Automatic on save                       |
-| **Material Request Source**        | Sales Order                            | Quotation (Draft)                       |
-| **Supplier Quotation Integration** | Manual comparison                      | Direct item selection                   |
-| **Quotation Approval**             | No approval required                   | Required (custom_approved)              |
-| **Item Rate Updates**              | Manual or Price List                   | From Supplier Quotations                |
-| **Journal Entry**                  | Manual creation                        | Automatic on Sales Order submit         |
-| **Expense Flow**                   | Purchase Receipt → Valuation           | Quotation → Sales Order → Journal Entry |
-| **Landed Cost Voucher Support**   | Stock Items & Fixed Assets only        | Stock Items, Fixed Assets & Service Items |
-| **Real-time Recalculation**       | Manual save required                   | Auto-save on expense changes (500ms debounce) |
+| Feature                            | Original ERPNext                       | Power App                                     |
+| ---------------------------------- | -------------------------------------- | --------------------------------------------- |
+| **Expense Location**               | Purchase Receipt (Landed Cost Voucher) | Quotation (Custom Table)                      |
+| **Expense Timing**                 | After goods received                   | At Quotation stage                            |
+| **Expense Distribution**           | Manual via Landed Cost Voucher         | Automatic on save                             |
+| **Material Request Source**        | Sales Order                            | Quotation (Draft)                             |
+| **Supplier Quotation Integration** | Manual comparison                      | Direct item selection                         |
+| **Quotation Approval**             | No approval required                   | Required (custom_approved)                    |
+| **Item Rate Updates**              | Manual or Price List                   | From Supplier Quotations                      |
+| **Journal Entry**                  | Manual creation                        | Automatic on Sales Order submit               |
+| **Expense Flow**                   | Purchase Receipt → Valuation           | Quotation → Sales Order → Journal Entry       |
+| **Landed Cost Voucher Support**    | Stock Items & Fixed Assets only        | Stock Items, Fixed Assets & Service Items     |
+| **Real-time Recalculation**        | Manual save required                   | Auto-save on expense changes (500ms debounce) |
 
 ---
 
