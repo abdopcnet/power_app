@@ -72,19 +72,25 @@ def _make_sales_order(source_name, target_doc=None, ignore_permissions=False, ar
         target.run_method("calculate_taxes_and_totals")
 
         # Copy expenses table from Quotation to Sales Order
+        # Only copy if table is empty (prevent duplicates on re-mapping)
         if hasattr(source, 'custom_quotation_expenses_table') and source.custom_quotation_expenses_table:
             if not hasattr(target, 'custom_sales_order_service_expenses_table'):
                 target.set('custom_sales_order_service_expenses_table', [])
 
-            for expense in source.custom_quotation_expenses_table:
-                target.append('custom_sales_order_service_expenses_table', {
-                    'service_expense_type': expense.service_expense_type,
-                    'company': expense.company,
-                    'default_account': expense.default_account,
-                    'amount': expense.amount,
-                })
-            frappe.log_error(
-                f"[quotation_mapper.py] _make_sales_order: Copied {len(source.custom_quotation_expenses_table)} expense(s) from Quotation {source_name}")
+            # Only copy if table is empty (prevent duplicates)
+            if not target.custom_sales_order_service_expenses_table:
+                for expense in source.custom_quotation_expenses_table:
+                    target.append('custom_sales_order_service_expenses_table', {
+                        'service_expense_type': expense.service_expense_type,
+                        'company': expense.company,
+                        'default_account': expense.default_account,
+                        'amount': expense.amount,
+                    })
+                frappe.log_error(
+                    f"[quotation_mapper.py] _make_sales_order: Copied {len(source.custom_quotation_expenses_table)} expense(s) from Quotation {source_name}")
+            else:
+                frappe.log_error(
+                    f"[quotation_mapper.py] _make_sales_order: Expenses table already exists, skipping copy")
 
     def update_item(obj, target, source_parent):
         balance_qty = obj.qty if is_unit_price_row(
