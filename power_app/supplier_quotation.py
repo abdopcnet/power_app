@@ -97,12 +97,7 @@ def update_quotation_linked(doc, q):
 
         target_doc.append("items", new_item)
 
-    # Add a comment to the Quotation timeline noting the update source
-    comment_text = f"Successfully copied {len(source_doc.items)} items from {source_supplier_quotation_name}."
-    target_doc.add_comment('Comment', comment_text)
-
-    # Calculate taxes and totals based on new items and save the document
-    target_doc.run_method("calculate_taxes_and_totals")
+    # Save the document
     target_doc.save(ignore_permissions=True)
     frappe.log_error(
         f"[supplier_quotation.py] update_quotation_linked: Updated {target_quotation_name} with {len(source_doc.items)} items")
