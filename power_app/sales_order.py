@@ -9,9 +9,18 @@ def create_je_from_service_expence(doc, method):
     Document event handler for Sales Order on_submit
     Creates Journal Entry automatically when Sales Order with custom service expenses is submitted
     """
-    if not hasattr(doc, 'custom_sales_order_service_expenses_table') or not doc.custom_sales_order_service_expenses_table:
+    expenses_field_candidates = [
+        "custom_service_expense_table",
+        "custom_sales_order_service_expenses_table",
+    ]
+    expenses_field = next(
+        (fieldname for fieldname in expenses_field_candidates if doc.meta.has_field(fieldname)),
+        None,
+    )
+    expenses_rows = doc.get(expenses_field) if expenses_field else None
+    if not expenses_rows:
         frappe.log_error(
-            f"[sales_order.py] create_je_from_service_expence: No expenses table found")
+            "[sales_order.py] create_je_from_service_expence: No expenses table found")
         return
 
     company = doc.company
@@ -31,7 +40,7 @@ def create_je_from_service_expence(doc, method):
 
     # Group expenses from the child table by their respective expense account
     grouped_expenses = defaultdict(float)
-    for row in doc.get("custom_sales_order_service_expenses_table"):
+    for row in expenses_rows:
         expense_account = row.default_account
         amount = flt(row.amount)
         if expense_account and amount > 0:
@@ -82,7 +91,7 @@ def create_je_from_service_expence(doc, method):
 def copy_quotation_expenses_to_sales_order(doc, method):
     """
     Document event handler for Sales Order before_save
-    Copies custom_quotation_expenses_table from Quotation to Sales Order custom_sales_order_service_expenses_table
+    Copies custom_service_expense_table from Quotation to Sales Order custom_sales_order_service_expenses_table
     Uses mapper hook approach - extends without overriding
     """
     # Check if expenses already copied (avoid duplicate on save)
@@ -129,7 +138,7 @@ def copy_quotation_expenses_to_sales_order(doc, method):
     # Get quotation expenses
     try:
         quotation = frappe.get_doc("Quotation", quotation_name)
-        if not hasattr(quotation, 'custom_quotation_expenses_table') or not quotation.custom_quotation_expenses_table:
+        if not hasattr(quotation, 'custom_service_expense_table') or not quotation.custom_service_expense_table:
             frappe.log_error(
                 f"[sales_order.py] copy_quotation_expenses_to_sales_order: No expenses in quotation {quotation_name}")
             return
@@ -138,7 +147,7 @@ def copy_quotation_expenses_to_sales_order(doc, method):
         if not hasattr(doc, 'custom_sales_order_service_expenses_table'):
             doc.set('custom_sales_order_service_expenses_table', [])
 
-        for expense in quotation.custom_quotation_expenses_table:
+        for expense in quotation.custom_service_expense_table:
             doc.append('custom_sales_order_service_expenses_table', {
                 'service_expense_type': expense.service_expense_type,
                 'company': expense.company,
@@ -149,7 +158,7 @@ def copy_quotation_expenses_to_sales_order(doc, method):
         # Mark as copied to avoid duplicates
         doc._quotation_expenses_copied = True
         frappe.log_error(
-            f"[sales_order.py] copy_quotation_expenses_to_sales_order: Copied {len(quotation.custom_quotation_expenses_table)} expense(s) from {quotation_name}")
+            f"[sales_order.py] copy_quotation_expenses_to_sales_order: Copied {len(quotation.custom_service_expense_table)} expense(s) from {quotation_name}")
     except Exception as e:
         frappe.log_error(
             f"[sales_order.py] copy_quotation_expenses_to_sales_order: Error copying expenses: {str(e)}")
