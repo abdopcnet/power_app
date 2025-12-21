@@ -100,7 +100,7 @@ Power App extends ERPNext's standard sales cycle to support intermediary service
     -   Standard ERPNext "Create Sales Order" button appears
     -   Click to create Sales Order from Quotation
     -   Expenses are automatically copied to Sales Order via mapper override:
-        -   `custom_quotation_expenses_table` → `custom_sales_order_service_expenses_table`
+        -   `custom_service_expense_table` → `custom_sales_order_service_expenses_table`
         -   Copied in `set_missing_values` function during document mapping
         -   Only copied if table is empty (prevents duplicates)
 
@@ -167,7 +167,7 @@ Quotation (Submitted)
 
 1. **Quotation Level:**
 
-    - Expenses added in `custom_quotation_expenses_table`
+    - Expenses added in `custom_service_expense_table`
     - Distributed to items on save (validate event)
 
 2. **Sales Order Level:**
@@ -183,20 +183,22 @@ Quotation (Submitted)
 
 ### Quotation → Sales Order Expense Copy
 
-| Quotation Field                   | Sales Order Field                           |
-| --------------------------------- | ------------------------------------------- |
-| `custom_quotation_expenses_table` | `custom_sales_order_service_expenses_table` |
-| `service_expense_type`            | `service_expense_type`                      |
-| `company`                         | `company`                                   |
-| `default_account`                 | `default_account`                           |
-| `amount`                          | `amount`                                    |
+| Quotation Field                | Sales Order Field                           |
+| ------------------------------ | ------------------------------------------- |
+| `custom_service_expense_table` | `custom_service_expense_table`             | 
+|                                | `custom_sales_order_service_expenses_table` |
+|                                | (legacy)                                   |
+| `service_expense_type`         | `service_expense_type`                      |
+| `company`                      | `company`                                   |
+| `default_account`              | `default_account`                           |
+| `amount`                       | `amount`                                    |
 
 ## Custom Fields Reference
 
 ### Quotation
 
 -   `custom_approved` (Check) - Required for submission
--   `custom_quotation_expenses_table` (Table: Service Expense) - Expense entries
+-   `custom_service_expense_table` (Table: Service Expense) - Expense entries
 -   `custom_item_margin` (Float) - Margin percentage
 
 ### Quotation Item
