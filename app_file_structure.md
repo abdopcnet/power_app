@@ -126,7 +126,7 @@ power_app/
 #### `power_app/power_app/custom/quotation.json`
 
 -   Custom fields for Quotation DocType
--   Fields: `custom_approved`, `custom_quotation_expenses_table`, `custom_item_margin`
+-   Fields: `custom_approved`, `custom_service_expense_table`, `custom_item_margin`
 
 #### `power_app/power_app/custom/quotation_item.json`
 
