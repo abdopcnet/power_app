@@ -99,8 +99,10 @@ Power App extends ERPNext's standard sales cycle to support intermediary service
 12. **Create Sales Order**
     -   Standard ERPNext "Create Sales Order" button appears
     -   Click to create Sales Order from Quotation
-    -   Expenses are automatically copied to Sales Order:
+    -   Expenses are automatically copied to Sales Order via mapper override:
         -   `custom_quotation_expenses_table` → `custom_sales_order_service_expenses_table`
+        -   Copied in `set_missing_values` function during document mapping
+        -   Only copied if table is empty (prevents duplicates)
 
 ### Phase 6: Sales Order Processing
 
@@ -200,7 +202,7 @@ Quotation (Submitted)
 ### Quotation Item
 
 -   `custom_supplier_quotation` (Link) - Supplier Quotation reference
--   `custom_item_expense_amount` (Currency) - Expense amount per item
+-   `custom_item_expense_amount` (Currency) - Expense amount per item (auto-calculated on expense distribution)
 
 ### Sales Order
 
