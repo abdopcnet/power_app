@@ -72,25 +72,40 @@ def _make_sales_order(source_name, target_doc=None, ignore_permissions=False, ar
         target.run_method("calculate_taxes_and_totals")
 
         # Copy expenses table from Quotation to Sales Order
-        # Only copy if table is empty (prevent duplicates on re-mapping)
-        if hasattr(source, 'custom_quotation_expenses_table') and source.custom_quotation_expenses_table:
-            if not hasattr(target, 'custom_sales_order_service_expenses_table'):
-                target.set('custom_sales_order_service_expenses_table', [])
+        # Only copy if source has rows and target table is empty (prevent duplicates on re-mapping)
+        source_field = "custom_service_expense_table"
+        target_field_candidates = [
+            "custom_service_expense_table",
+            "custom_sales_order_service_expenses_table",
+        ]
 
-            # Only copy if table is empty (prevent duplicates)
-            if not target.custom_sales_order_service_expenses_table:
-                for expense in source.custom_quotation_expenses_table:
-                    target.append('custom_sales_order_service_expenses_table', {
-                        'service_expense_type': expense.service_expense_type,
-                        'company': expense.company,
-                        'default_account': expense.default_account,
-                        'amount': expense.amount,
-                    })
-                frappe.log_error(
-                    f"[quotation_mapper.py] _make_sales_order: Copied {len(source.custom_quotation_expenses_table)} expense(s) from Quotation {source_name}")
-            else:
-                frappe.log_error(
-                    f"[quotation_mapper.py] _make_sales_order: Expenses table already exists, skipping copy")
+        target_field = next(
+            (fieldname for fieldname in target_field_candidates if target.meta.has_field(
+                fieldname)),
+            None,
+        )
+
+        if source.meta.has_field(source_field) and target_field:
+            source_rows = source.get(source_field) or []
+            if source_rows:
+                if not target.get(target_field):
+                    for expense in source_rows:
+                        target.append(
+                            target_field,
+                            {
+                                "service_expense_type": expense.service_expense_type,
+                                "company": expense.company,
+                                "default_account": expense.default_account,
+                                "amount": expense.amount,
+                            },
+                        )
+                    frappe.log_error(
+                        f"[quotation_mapper.py] _make_sales_order: Copied {len(source_rows)} expense(s) into {target_field} from Quotation {source_name}"
+                    )
+                else:
+                    frappe.log_error(
+                        f"[quotation_mapper.py] _make_sales_order: Target table {target_field} already has rows, skipping copy"
+                    )
 
     def update_item(obj, target, source_parent):
         balance_qty = obj.qty if is_unit_price_row(
