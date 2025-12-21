@@ -249,23 +249,93 @@ async function fetch_item_details(frm, item_codes) {
 
 // Build the HTML table for the item details dialog
 function build_item_details_html(item_details, currency) {
-	let html = `
-        <p><strong>${__('Note:')}</strong> ${__(
-		'Stock Qty is based on the current default/selected warehouse.',
-	)}</p>
-        <div class="form-section card-section" style="margin-top:0">
-            <table class="table table-bordered table-hover">
-                <thead style="color: #1c5cab;">
-                    <tr>
-                        <th style="width:25%;">${__('Item')}</th>
-                        <th style="width:25%;">${__('Qty in Warehouse')}</th>
-                        <th style="width:25%;">${__('Last Selling Rate')}</th>
-                        <th style="width:25%;">${__('Last Purchase Rate')}</th>
-                        <th style="width:25%;">${__('Last Purchase Supplier')}</th>
-                    </tr>
-                </thead>
-                <tbody>
-    `;
+	// Add CSS for better styling
+	const css = `
+		<style>
+			.item-details-container {
+				padding: 15px;
+				background-color: #f8f9fa;
+				border-radius: 4px;
+				margin-bottom: 15px;
+			}
+			.item-details-note {
+				background-color: #e7f3ff;
+				border-left: 4px solid #1c5cab;
+				padding: 10px 15px;
+				margin-bottom: 15px;
+				border-radius: 4px;
+				font-size: 13px;
+			}
+			.item-details-table {
+				width: 100%;
+				border-collapse: collapse;
+				background-color: #fff;
+				box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+			}
+			.item-details-table thead {
+				background-color: #1c5cab;
+				color: #fff;
+			}
+			.item-details-table thead th {
+				padding: 12px 15px;
+				text-align: left;
+				font-weight: 600;
+				font-size: 13px;
+				border-bottom: 2px solid #0d3d6b;
+			}
+			.item-details-table tbody tr {
+				border-bottom: 1px solid #e0e0e0;
+				transition: background-color 0.2s;
+			}
+			.item-details-table tbody tr:hover {
+				background-color: #f5f5f5;
+			}
+			.item-details-table tbody td {
+				padding: 12px 15px;
+				font-size: 13px;
+				vertical-align: middle;
+			}
+			.item-details-table tbody td:first-child {
+				font-weight: 500;
+			}
+			.item-details-table tbody td a {
+				color: #1c5cab;
+				text-decoration: none;
+				font-weight: 500;
+			}
+			.item-details-table tbody td a:hover {
+				text-decoration: underline;
+			}
+			.item-details-table .text-right {
+				text-align: right;
+			}
+			.item-details-table .text-center {
+				text-align: center;
+			}
+		</style>
+	`;
+
+	let html =
+		css +
+		`
+		<div class="item-details-container">
+			<div class="item-details-note">
+				<strong>${__('Note:')}</strong> ${__(
+			'Stock Qty is based on the current default/selected warehouse.',
+		)}
+			</div>
+			<table class="item-details-table">
+				<thead>
+					<tr>
+						<th style="width: 20%;">${__('Item Code')}</th>
+						<th style="width: 15%;" class="text-center">${__('Qty in Warehouse')}</th>
+						<th style="width: 20%;" class="text-right">${__('Last Selling Rate')}</th>
+						<th style="width: 20%;" class="text-right">${__('Last Purchase Rate')}</th>
+						<th style="width: 25%;">${__('Last Purchase Supplier')}</th>
+					</tr>
+				</thead>
+				<tbody>
+	`;
 
 	item_details.forEach((item) => {
 		const selling_rate_formatted = frappe.format(item.last_selling_rate, {
@@ -280,22 +350,30 @@ function build_item_details_html(item_details, currency) {
 		// Format stock quantity
 		const qty_formatted = frappe.format(item.stock_qty, { fieldtype: 'Float' });
 
+		// Escape HTML to prevent XSS
+		const item_code_escaped = frappe.utils.escape_html(item.item_code);
+		const supplier_escaped = frappe.utils.escape_html(item.supplier);
+
 		html += `
-            <tr>
-                <td><a href="/app/item/${item.item_code}" target="_blank" rel="noopener">${item.item_code}</a></td>
-                <td>${qty_formatted} </td>
-                <td>${selling_rate_formatted}</td>
-                <td>${purchase_rate_formatted}</td>
-                <td>${item.supplier}</td>
-            </tr>
-        `;
+			<tr>
+				<td>
+					<a href="/app/item/${item.item_code}" target="_blank" rel="noopener">
+						${item_code_escaped}
+					</a>
+				</td>
+				<td class="text-center">${qty_formatted}</td>
+				<td class="text-right">${selling_rate_formatted || '-'}</td>
+				<td class="text-right">${purchase_rate_formatted || '-'}</td>
+				<td>${supplier_escaped}</td>
+			</tr>
+		`;
 	});
 
 	html += `
-                </tbody>
-            </table>
-        </div>
-    `;
+				</tbody>
+			</table>
+		</div>
+	`;
 	return html;
 }
 
