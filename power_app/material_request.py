@@ -8,11 +8,11 @@ def make_material_request_from_quotation(source, target=None):
     """
     Creates a Material Request from a Quotation.
     Maps item details and sets the Material Request Type to 'Purchase'.
-    
+
     Args:
         source: Quotation document name
         target: Existing Material Request name (optional)
-    
+
     Returns:
         Material Request document
     """
@@ -21,13 +21,14 @@ def make_material_request_from_quotation(source, target=None):
         # Set the Material Request Type
         target.material_request_type = "Purchase"
         target.company = source.company
-        target.custom_create_from_dc = "Material Request"
-        target.custom_dc_refrance = source.name
+        target.custom_created_from_doctype = "Material Request"
+        target.custom_quotation_refrence = source.name
         target.run_method("set_missing_values")
 
     # Execute the mapping process
     # Allow mapping from Draft Quotations (docstatus = 0) for intermediary workflow
-    frappe.log_error(f"[material_request.py] make_material_request_from_quotation: Creating MR from {source}")
+    frappe.log_error(
+        f"[material_request.py] make_material_request_from_quotation: Creating MR from {source}")
     doc = get_mapped_doc(
         "Quotation",
         source,
@@ -52,6 +53,6 @@ def make_material_request_from_quotation(source, target=None):
         set_missing_values
     )
 
-    frappe.log_error(f"[material_request.py] make_material_request_from_quotation: Material Request {doc.name} created successfully")
+    frappe.log_error(
+        f"[material_request.py] make_material_request_from_quotation: Material Request {doc.name} created successfully")
     return doc
-
