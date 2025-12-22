@@ -46,7 +46,7 @@ app_license = "mit"
 doctype_js = {
     "Quotation": "public/js/quotation.js",
     "Supplier Quotation": "public/js/supplier_quotation.js",
-
+    "Sales Order": "public/js/sales_order.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -151,6 +151,7 @@ doc_events = {
     "Sales Order": {
         # Expenses are copied via override in quotation_mapper.py (make_sales_order)
         # before_save removed to prevent duplicate expense rows on every save
+        "validate": "power_app.sales_order.sales_order_validate",
         "on_submit": "power_app.sales_order.create_je_from_service_expence",
         # "on_cancel": "method",
         # "on_trash": "method"
