@@ -185,9 +185,9 @@ Quotation (Submitted)
 
 | Quotation Field                | Sales Order Field                           |
 | ------------------------------ | ------------------------------------------- |
-| `custom_service_expense_table` | `custom_service_expense_table`             | 
+| `custom_service_expense_table` | `custom_service_expense_table`              |
 |                                | `custom_sales_order_service_expenses_table` |
-|                                | (legacy)                                   |
+|                                | (legacy)                                    |
 | `service_expense_type`         | `service_expense_type`                      |
 | `company`                      | `company`                                   |
 | `default_account`              | `default_account`                           |
@@ -200,10 +200,12 @@ Quotation (Submitted)
 -   `custom_approved` (Check) - Required for submission
 -   `custom_service_expense_table` (Table: Service Expense) - Expense entries
 -   `custom_item_margin` (Float) - Margin percentage
+-   `custom_total_expenses` (Currency) - Total expenses from expense table (auto-calculated)
 
 ### Quotation Item
 
 -   `custom_supplier_quotation` (Link) - Supplier Quotation reference
+-   `custom_supplier_quotation_item_rate` (Currency) - Supplier quotation item rate (auto-saved from Supplier Quotation)
 -   `custom_item_expense_amount` (Currency) - Expense amount per item (auto-calculated on expense distribution)
 
 ### Sales Order
