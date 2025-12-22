@@ -645,6 +645,79 @@ Quotation (Draft)
 
 ---
 
+## Step 22: Add custom_supplier_quotation_item_rate and custom_total_expenses Fields
+
+**What I Did:**
+
+1. **Added `custom_supplier_quotation_item_rate` field:**
+
+    - Automatically saves supplier quotation item rate when `custom_supplier_quotation` is selected
+    - Used as original rate for expense distribution calculations
+    - Updated in both JavaScript (live) and Python (on save)
+
+2. **Added `custom_total_expenses` field:**
+
+    - Automatically calculates total expenses from `custom_service_expense_table`
+    - Updates in real-time when expenses are added/modified/removed
+    - Updated in both JavaScript (live) and Python (on save)
+
+3. **Fixed expense distribution logic:**
+
+    - Uses `custom_supplier_quotation_item_rate` as original rate if available
+    - Properly calculates and stores `custom_item_expense_amount` for each item
+    - Only updates `rate` field (simplified as per user request)
+
+4. **Fixed margin application:**
+    - Margin applied AFTER expenses are distributed
+    - Only updates `rate` field (simplified as per user request)
+    - Formula: `final_rate = (original_rate + expenses) + ((original_rate + expenses) * margin% / 100)`
+
+**Files Modified:**
+
+-   `power_app/power_app/public/js/quotation.js`
+
+    -   Added `update_total_expenses()` function
+    -   Added event handler for `custom_supplier_quotation` in Quotation Item
+    -   Fixed expense distribution to save `custom_item_expense_amount`
+    -   Fixed margin calculation to only update `rate` field
+    -   Uses `custom_supplier_quotation_item_rate` as original rate
+
+-   `power_app/power_app/quotation.py`
+    -   Added `custom_total_expenses` update in `quotation_validate`
+    -   Added `custom_supplier_quotation_item_rate` update when supplier quotation is set
+    -   Fixed expense distribution to save `custom_item_expense_amount`
+    -   Uses `custom_supplier_quotation_item_rate` as original rate if available
+
+**Calculation Flow:**
+
+1. Restore original rate:
+
+    - If `custom_supplier_quotation` exists → Use `custom_supplier_quotation_item_rate`
+    - Else → Use `price_list_rate` or current rate
+
+2. Distribute expenses:
+
+    - Calculate total expenses from `custom_service_expense_table`
+    - Update `custom_total_expenses` field
+    - Distribute proportionally: `expense_per_item = (item_amount / total_item_amount) * total_expenses / qty`
+    - Update `rate = original_rate + expense_per_item`
+    - Save `custom_item_expense_amount = expense_per_item * qty`
+
+3. Apply margin (if exists):
+    - Get rate after expenses: `rate_after_expenses = rate`
+    - Calculate margin: `margin_amount = rate_after_expenses * margin% / 100`
+    - Final rate: `final_rate = rate_after_expenses + margin_amount`
+    - Update only `rate` field
+
+**Result:**
+
+-   `custom_supplier_quotation_item_rate` automatically saves supplier rate when supplier quotation is selected
+-   `custom_total_expenses` automatically shows total expenses from expense table
+-   `custom_item_expense_amount` correctly stores expense amount per item
+-   Expense distribution and margin application work correctly with simplified rate-only updates
+
+---
+
 ## Implementation Checklist
 
 -   [x] Step 1: Add Custom Fields (You do JSON modification)
@@ -666,3 +739,4 @@ Quotation (Draft)
 -   [x] Step 19: Fix Expenses Table Copy to Sales Order (I add mapper override)
 -   [x] Step 20: Improve Item History Dialog Styling (I add CSS and better formatting)
 -   [x] Step 21: Fix custom_item_expense_amount Field Update (I add field update in expense distribution)
+-   [x] Step 22: Add custom_supplier_quotation_item_rate and custom_total_expenses Fields (I add fields and fix calculations)
