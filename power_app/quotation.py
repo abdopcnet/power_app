@@ -22,13 +22,9 @@ def get_supplier_quotation_items(quotation_name):
     )
 
     if not mr_list:
-        frappe.log_error(
-            f"[quotation.py] get_supplier_quotation_items: No Material Requests found for {quotation_name}")
         return []
 
     mr_names = [mr.name for mr in mr_list]
-    frappe.log_error(
-        f"[quotation.py] get_supplier_quotation_items: Found {len(mr_names)} Material Request(s)")
 
     # Get all Supplier Quotation Items linked to these Material Requests
     sq_items = frappe.get_all(
@@ -52,8 +48,6 @@ def get_supplier_quotation_items(quotation_name):
     )
 
     if not sq_items:
-        frappe.log_error(
-            f"[quotation.py] get_supplier_quotation_items: No Supplier Quotation Items found")
         return []
 
     # Get supplier names and other details from Supplier Quotation
@@ -65,8 +59,6 @@ def get_supplier_quotation_items(quotation_name):
         item["valid_till"] = sq_doc.valid_till
         item["transaction_date"] = sq_doc.transaction_date
 
-    frappe.log_error(
-        f"[quotation.py] get_supplier_quotation_items: Returning {len(sq_items)} items")
     return sq_items
 
 
@@ -85,8 +77,6 @@ def get_material_requests_from_quotation(quotation_name):
     )
 
     if not mr_list:
-        frappe.log_error(
-            f"[quotation.py] get_material_requests_from_quotation: No Material Requests found for {quotation_name}")
         return []
 
     # Get RFQ for each Material Request
@@ -109,8 +99,6 @@ def get_material_requests_from_quotation(quotation_name):
         }
         result.append(mr_data)
 
-    frappe.log_error(
-        f"[quotation.py] get_material_requests_from_quotation: Returning {len(result)} Material Request(s)")
     return result
 
 
@@ -140,14 +128,10 @@ def add_items_from_supplier_quotations(quotation_name, selected_items):
         selected_items = json.loads(selected_items)
 
     if not selected_items:
-        frappe.log_error(
-            f"[quotation.py] add_items_from_supplier_quotations: No items selected")
         frappe.throw(_("No items selected"))
 
     # Get Quotation document
     quotation = frappe.get_doc("Quotation", quotation_name)
-    frappe.log_error(
-        f"[quotation.py] add_items_from_supplier_quotations: Processing {len(selected_items)} selected items")
 
     # Check if quotation is draft
     if quotation.docstatus != 0:
@@ -188,8 +172,6 @@ def add_items_from_supplier_quotations(quotation_name, selected_items):
                 "supplier_quotation")
 
             items_updated += 1
-            frappe.log_error(
-                f"[quotation.py] add_items_from_supplier_quotations: Updated item {item_data.get('item_code')} with rate {supplier_rate}")
         else:
             # Add new item
             item_row = {
@@ -214,32 +196,9 @@ def add_items_from_supplier_quotations(quotation_name, selected_items):
             # Add item to quotation
             quotation.append("items", item_row)
             items_added += 1
-            frappe.log_error(
-                f"[quotation.py] add_items_from_supplier_quotations: Added item {item_data.get('item_code')} with rate {supplier_rate}")
 
     # Save quotation
     quotation.save(ignore_permissions=True)
-    frappe.log_error(
-        f"[quotation.py] add_items_from_supplier_quotations: Saved - Added: {items_added}, Updated: {items_updated}")
-
-    # Prepare message
-    message_parts = []
-    if items_added > 0:
-        message_parts.append(_("Added {0} new item(s)").format(items_added))
-    if items_updated > 0:
-        message_parts.append(
-            _("Updated {0} existing item(s)").format(items_updated))
-
-    if message_parts:
-        frappe.msgprint(
-            " | ".join(message_parts),
-            indicator="green"
-        )
-    else:
-        frappe.msgprint(
-            _("No items were processed"),
-            indicator="orange"
-        )
 
     return quotation
 
@@ -273,24 +232,17 @@ def quotation_validate(doc, method):
                 )
                 if sq_items:
                     original_rate = flt(sq_items[0].rate)
-                    frappe.log_error(
-                        f"[quotation.py] quotation_validate: Restored rate from Supplier Quotation {item.custom_supplier_quotation}: {original_rate}")
             except Exception as e:
-                frappe.log_error(
-                    f"[quotation.py] quotation_validate: Error fetching rate from Supplier Quotation: {str(e)}")
+                pass
 
         # If no supplier quotation or rate not found, use price_list_rate
         if original_rate is None or original_rate == 0:
             # Use price_list_rate if available and not zero, otherwise keep current rate
             if flt(item.price_list_rate) > 0:
                 original_rate = flt(item.price_list_rate)
-                frappe.log_error(
-                    f"[quotation.py] quotation_validate: Using price_list_rate: {original_rate}")
             else:
                 # If price_list_rate is zero or empty, use current rate as fallback
                 original_rate = flt(item.rate) or 0
-                frappe.log_error(
-                    f"[quotation.py] quotation_validate: Using current rate as fallback: {original_rate}")
 
         # Restore original rate
         item.rate = original_rate
@@ -303,8 +255,6 @@ def quotation_validate(doc, method):
     if hasattr(doc, 'custom_service_expense_table') and doc.custom_service_expense_table:
         for i in doc.custom_service_expense_table:
             total_expenses += flt(i.amount)
-        frappe.log_error(
-            f"[quotation.py] quotation_validate: Total expenses: {total_expenses}")
 
     # Step 3: Calculate total item amount for expense distribution
     total_item_amount = 0.00
@@ -332,15 +282,11 @@ def quotation_validate(doc, method):
             # Store expense amount in custom field
             if hasattr(i, 'custom_item_expense_amount'):
                 i.custom_item_expense_amount = expense_amount_for_item
-                frappe.log_error(
-                    f"[quotation.py] quotation_validate: Item {i.item_code} - Expense amount: {expense_amount_for_item}")
     else:
         # If no expenses, reset custom_item_expense_amount to 0
         for i in doc.items:
             if hasattr(i, 'custom_item_expense_amount'):
                 i.custom_item_expense_amount = 0
-                frappe.log_error(
-                    f"[quotation.py] quotation_validate: Item {i.item_code} - Expense amount reset to 0")
 
     # Step 5: Apply margin if exists
     if hasattr(doc, 'custom_item_margin') and flt(doc.custom_item_margin) != 0:
@@ -352,11 +298,7 @@ def quotation_validate(doc, method):
             i.amount = i.rate * flt(i.qty)
             i.net_amount = i.net_rate * flt(i.qty)
 
-    if (hasattr(doc, 'custom_service_expense_table') and doc.custom_service_expense_table) or \
-       (hasattr(doc, 'custom_item_margin') and flt(doc.custom_item_margin) != 0):
-        frappe.log_error(
-            f"[quotation.py] quotation_validate: Rates updated for {len(doc.items)} items")
-        frappe.msgprint(_("Item Rate Updated"))
+    # Rates updated - no logging needed
 
 
 def quotation_before_submit(doc, method):
@@ -365,10 +307,6 @@ def quotation_before_submit(doc, method):
     Allows submitting Quotation only if Approved checkbox is checked
     """
     if not hasattr(doc, 'custom_approved') or not doc.custom_approved:
-        frappe.log_error(
-            f"[quotation.py] quotation_before_submit: Submission blocked - Approved not checked")
         frappe.throw(
             _("Please check 'Approved' checkbox before submitting the Quotation.")
         )
-    frappe.log_error(
-        f"[quotation.py] quotation_before_submit: Quotation {doc.name} approved and ready to submit")
