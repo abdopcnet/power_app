@@ -2,6 +2,7 @@
   "custom_fields": [],
   "custom_perms": [],
   "doctype": "Supplier Quotation",
+  "links": [],
   "property_setters": [
     {
       "_assign": null,
