@@ -99,13 +99,8 @@ def _make_sales_order(source_name, target_doc=None, ignore_permissions=False, ar
                                 "amount": expense.amount,
                             },
                         )
-                    frappe.log_error(
-                        f"[quotation_mapper.py] _make_sales_order: Copied {len(source_rows)} expense(s) into {target_field} from Quotation {source_name}"
-                    )
                 else:
-                    frappe.log_error(
-                        f"[quotation_mapper.py] _make_sales_order: Target table {target_field} already has rows, skipping copy"
-                    )
+                    pass
 
     def update_item(obj, target, source_parent):
         balance_qty = obj.qty if is_unit_price_row(
