@@ -106,6 +106,11 @@ let is_recalculating = false;
  * Calculate and update total expenses in custom_total_expenses field
  */
 function update_total_expenses(frm) {
+	// Skip if quotation_to is not set (required field, prevents save errors)
+	if (!frm.doc.quotation_to) {
+		return;
+	}
+
 	if (
 		!frm.doc.custom_service_expense_table ||
 		frm.doc.custom_service_expense_table.length === 0
@@ -127,6 +132,11 @@ function update_total_expenses(frm) {
  * Replicates the logic from quotation_validate in Python
  */
 function calculate_expense_rates(frm) {
+	// Skip if quotation_to is not set (required field, prevents save errors)
+	if (!frm.doc.quotation_to) {
+		return;
+	}
+
 	if (!frm.doc.items || frm.doc.items.length === 0) {
 		return;
 	}
@@ -272,6 +282,11 @@ function calculate_expense_rates(frm) {
 }
 
 function trigger_expense_recalculation(frm) {
+	// Skip if quotation_to is not set (required field, prevents save errors)
+	if (!frm.doc.quotation_to) {
+		return;
+	}
+
 	// Skip if already recalculating to avoid recursion
 	if (is_recalculating) {
 		return;
@@ -283,7 +298,7 @@ function trigger_expense_recalculation(frm) {
 	}
 
 	expense_update_timeout = setTimeout(() => {
-		if (frm.doc.docstatus === 0) {
+		if (frm.doc.docstatus === 0 && frm.doc.quotation_to) {
 			is_recalculating = true;
 			console.log('[quotation.js] (Recalculating rates after expense change - live update)');
 
