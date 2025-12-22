@@ -28,6 +28,13 @@ def create_je_from_service_expence(doc, method):
         "Company", company, "custom_default_service_expense_account"
     )
 
+    # If not set, use default_expense_account as fallback
+    if not default_credit_account:
+        default_credit_account = frappe.db.get_value(
+            "Company", company, "default_expense_account"
+        )
+
+    # If still not set, throw error
     if not default_credit_account:
         frappe.throw(
             _("Please set the default service expense account in Company: {0}").format(
@@ -51,6 +58,12 @@ def create_je_from_service_expence(doc, method):
     je.company = company
     je.posting_date = doc.transaction_date
     je.user_remark = f"Journal Entry for {doc.doctype}: {doc.name}"
+
+    # Link Journal Entry to Sales Order (for Document Links)
+    if hasattr(je, 'custom_created_from_doctype'):
+        je.custom_created_from_doctype = "Sales Order"
+    if hasattr(je, 'custom_sales_order_refrence'):
+        je.custom_sales_order_refrence = doc.name
 
     total_amount = 0
     for account, amount in grouped_expenses.items():
@@ -140,3 +153,48 @@ def copy_quotation_expenses_to_sales_order(doc, method):
         doc._quotation_expenses_copied = True
     except Exception as e:
         pass
+
+
+def sales_order_validate(doc, method):
+    """
+    Document event handler for Sales Order validate
+    Cleans up payment_schedule and sets due_date to delivery_date for first row
+    """
+    from frappe.utils import getdate
+    from datetime import timedelta
+
+    if not hasattr(doc, 'payment_schedule') or not doc.payment_schedule:
+        return
+
+    # Get posting date (transaction_date for Sales Order)
+    posting_date = doc.transaction_date or doc.posting_date
+    if not posting_date:
+        return
+
+    # Remove empty rows where payment_term is empty
+    rows_to_remove = []
+    for idx, row in enumerate(doc.payment_schedule):
+        if not row.payment_term and not row.payment_amount:
+            rows_to_remove.append(idx)
+
+    # Remove rows in reverse order to maintain indices
+    for idx in reversed(rows_to_remove):
+        doc.payment_schedule.pop(idx)
+
+    # If payment_schedule has rows, set first row due_date (even if payment_term is not set)
+    if doc.payment_schedule:
+        first_row = doc.payment_schedule[0]
+
+        # Determine due_date: must be after posting_date
+        if doc.delivery_date and getdate(doc.delivery_date) >= getdate(posting_date):
+            due_date = doc.delivery_date
+        else:
+            # Use posting_date + 1 day to ensure it's after posting_date
+            due_date = getdate(posting_date) + timedelta(days=1)
+
+        # Always ensure due_date is after posting_date
+        if getdate(due_date) < getdate(posting_date):
+            due_date = getdate(posting_date) + timedelta(days=1)
+
+        # Update due_date for first row (even if payment_term is not set)
+        first_row.due_date = due_date
