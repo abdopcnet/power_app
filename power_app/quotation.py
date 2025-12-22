@@ -170,6 +170,9 @@ def add_items_from_supplier_quotations(quotation_name, selected_items):
             existing_item.net_amount = supplier_rate * flt(existing_item.qty)
             existing_item.custom_supplier_quotation = item_data.get(
                 "supplier_quotation")
+            # Update custom_supplier_quotation_item_rate
+            if hasattr(existing_item, 'custom_supplier_quotation_item_rate'):
+                existing_item.custom_supplier_quotation_item_rate = supplier_rate
 
             items_updated += 1
         else:
@@ -187,6 +190,7 @@ def add_items_from_supplier_quotations(quotation_name, selected_items):
             # Add custom fields for supplier quotation tracking
             item_row.update({
                 "custom_supplier_quotation": item_data.get("supplier_quotation"),
+                "custom_supplier_quotation_item_rate": supplier_rate,
             })
 
             # Calculate amount
@@ -217,38 +221,45 @@ def quotation_validate(doc, method):
     for item in doc.items:
         original_rate = None
 
-        # Check if item has supplier quotation
+        # Step 1: Get original rate
+        # Priority: custom_supplier_quotation_item_rate > price_list_rate > current rate
+        if hasattr(item, 'custom_supplier_quotation_item_rate') and flt(item.custom_supplier_quotation_item_rate) > 0:
+            # Use custom_supplier_quotation_item_rate if available (saved from Supplier Quotation)
+            original_rate = flt(item.custom_supplier_quotation_item_rate)
+        elif flt(item.price_list_rate) > 0:
+            # Use price_list_rate if available
+            original_rate = flt(item.price_list_rate)
+        else:
+            # Fallback to current rate
+            original_rate = flt(item.rate) or 0
+
+        # If custom_supplier_quotation exists but custom_supplier_quotation_item_rate is not set,
+        # try to fetch from Supplier Quotation Item and update the field
         if hasattr(item, 'custom_supplier_quotation') and item.custom_supplier_quotation:
-            # Get rate from Supplier Quotation Item
-            try:
-                sq_items = frappe.get_all(
-                    "Supplier Quotation Item",
-                    filters={
-                        "parent": item.custom_supplier_quotation,
-                        "item_code": item.item_code
-                    },
-                    fields=["rate"],
-                    limit=1
-                )
-                if sq_items:
-                    original_rate = flt(sq_items[0].rate)
-            except Exception as e:
-                pass
+            if not hasattr(item, 'custom_supplier_quotation_item_rate') or flt(item.custom_supplier_quotation_item_rate) == 0:
+                try:
+                    sq_items = frappe.get_all(
+                        "Supplier Quotation Item",
+                        filters={
+                            "parent": item.custom_supplier_quotation,
+                            "item_code": item.item_code
+                        },
+                        fields=["rate"],
+                        limit=1
+                    )
+                    if sq_items and flt(sq_items[0].rate) > 0:
+                        # Update custom_supplier_quotation_item_rate field for future use
+                        if hasattr(item, 'custom_supplier_quotation_item_rate'):
+                            item.custom_supplier_quotation_item_rate = flt(
+                                sq_items[0].rate)
+                        # Use this rate if we don't have price_list_rate
+                        if original_rate == 0 or (flt(item.price_list_rate) == 0 and original_rate == flt(item.rate)):
+                            original_rate = flt(sq_items[0].rate)
+                except Exception as e:
+                    pass
 
-        # If no supplier quotation or rate not found, use price_list_rate
-        if original_rate is None or original_rate == 0:
-            # Use price_list_rate if available and not zero, otherwise keep current rate
-            if flt(item.price_list_rate) > 0:
-                original_rate = flt(item.price_list_rate)
-            else:
-                # If price_list_rate is zero or empty, use current rate as fallback
-                original_rate = flt(item.rate) or 0
-
-        # Restore original rate
+        # Restore original rate (only rate field)
         item.rate = original_rate
-        item.net_rate = original_rate
-        item.amount = original_rate * flt(item.qty)
-        item.net_amount = original_rate * flt(item.qty)
 
     # Step 2: Calculate total expenses
     total_expenses = 0.00
@@ -256,28 +267,27 @@ def quotation_validate(doc, method):
         for i in doc.custom_service_expense_table:
             total_expenses += flt(i.amount)
 
+    # Update custom_total_expenses field
+    if hasattr(doc, 'custom_total_expenses'):
+        doc.custom_total_expenses = total_expenses
+
     # Step 3: Calculate total item amount for expense distribution
     total_item_amount = 0.00
-    total_net_item_amount = 0.00
     for i in doc.items:
-        total_item_amount += flt(i.amount)
-        total_net_item_amount += flt(i.net_amount)
+        total_item_amount += flt(i.rate) * flt(i.qty)
 
     # Step 4: Distribute expenses to items
-    if total_item_amount != 0 and total_net_item_amount != 0 and total_expenses > 0:
+    if total_item_amount != 0 and total_expenses > 0:
         for i in doc.items:
             # Calculate expense per unit
+            item_amount = flt(i.rate) * flt(i.qty)
             expense_per_item = (
-                flt(i.amount) / total_item_amount * total_expenses) / flt(i.qty)
+                item_amount / total_item_amount * total_expenses) / flt(i.qty)
             # Calculate total expense amount for this item
             expense_amount_for_item = expense_per_item * flt(i.qty)
 
-            # Update rate with expense
+            # Update rate with expense (only rate field)
             i.rate = flt(i.rate) + expense_per_item
-            i.net_rate = flt(i.net_rate) + (flt(i.net_amount) /
-                                            total_net_item_amount * total_expenses) / flt(i.qty)
-            i.amount = i.rate * flt(i.qty)
-            i.net_amount = i.net_rate * flt(i.qty)
 
             # Store expense amount in custom field
             if hasattr(i, 'custom_item_expense_amount'):
@@ -288,15 +298,19 @@ def quotation_validate(doc, method):
             if hasattr(i, 'custom_item_expense_amount'):
                 i.custom_item_expense_amount = 0
 
-    # Step 5: Apply margin if exists
+    # Step 5: Apply margin if exists (AFTER expenses are added)
+    # Margin is applied on: (Original Rate + Distributed Expenses)
     if hasattr(doc, 'custom_item_margin') and flt(doc.custom_item_margin) != 0:
         for i in doc.items:
-            margin_amount = flt(i.rate) * flt(doc.custom_item_margin) / 100
-            i.rate = flt(i.rate) + margin_amount
-            i.net_rate = flt(i.net_rate) + (flt(i.net_rate) *
-                                            flt(doc.custom_item_margin) / 100)
-            i.amount = i.rate * flt(i.qty)
-            i.net_amount = i.net_rate * flt(i.qty)
+            # Get current rate (which already includes expenses from Step 4)
+            # This is: Original Rate + Distributed Expenses
+            rate_after_expenses = flt(i.rate)
+
+            # Calculate margin amount based on rate AFTER expenses
+            margin_amount = rate_after_expenses * \
+                flt(doc.custom_item_margin) / 100
+            # Final rate = Original + Expenses + Margin (only rate field)
+            i.rate = rate_after_expenses + margin_amount
 
     # Rates updated - no logging needed
 
