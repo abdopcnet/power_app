@@ -58,6 +58,7 @@ Power App is a Frappe/ERPNext customization for intermediary service companies. 
 -   Automatic expense distribution to items proportionally
 -   Real-time rate recalculation when expenses are modified/deleted
 -   Expenses included in final pricing upfront
+-   Total expenses automatically calculated in `custom_total_expenses` field
 
 **Features:**
 
@@ -66,8 +67,10 @@ Power App is a Frappe/ERPNext customization for intermediary service companies. 
 -   Auto-save with 500ms debounce when expenses change
 -   Rates automatically restore to original when expenses are removed
 -   Margin can be applied after expense distribution
+-   Expense amount per item stored in `custom_item_expense_amount`
 
 **Table:** `custom_service_expense_table` (Service Expense)
+**Fields:** `custom_total_expenses` (total), `custom_item_expense_amount` (per item)
 
 ---
 
@@ -132,17 +135,17 @@ Power App is a Frappe/ERPNext customization for intermediary service companies. 
 ### 9. Rate Restoration Logic
 
 -   **Automatic rate restoration before expense distribution**
--   Uses supplier quotation rate if available
+-   Uses `custom_supplier_quotation_item_rate` if supplier quotation is selected
 -   Falls back to price list rate if no supplier quotation
 -   Ensures accurate expense distribution
 
 **Logic:**
 
-1. Check if item has supplier quotation → Use supplier rate
-2. If no supplier quotation → Use price_list_rate
+1. Check if item has `custom_supplier_quotation` → Use `custom_supplier_quotation_item_rate`
+2. If no supplier quotation → Use `price_list_rate`
 3. Restore rate to original value
-4. Distribute expenses proportionally
-5. Apply margin if set
+4. Distribute expenses proportionally (saves to `custom_item_expense_amount`)
+5. Apply margin if set (after expenses)
 
 ---
 
