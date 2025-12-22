@@ -21,12 +21,6 @@ def check_quotation_linked(doc):
             )
             break
 
-    if quotation_name:
-        frappe.log_error(
-            f"[supplier_quotation.py] check_quotation_linked: Found linked quotation {quotation_name} for {doc}")
-    else:
-        frappe.log_error(
-            f"[supplier_quotation.py] check_quotation_linked: No linked quotation found for {doc}")
     return quotation_name if quotation_name else None
 
 
@@ -43,15 +37,11 @@ def update_quotation_linked(doc, q):
     target_quotation_name = q
 
     if not source_supplier_quotation_name:
-        frappe.log_error(
-            f"[supplier_quotation.py] update_quotation_linked: No Supplier Quotation specified")
         frappe.throw(_("No Supplier Quotation specified."))
         return
 
     # Set Quotation to Draft status
     frappe.db.set_value("Quotation", target_quotation_name, "docstatus", 0)
-    frappe.log_error(
-        f"[supplier_quotation.py] update_quotation_linked: Updating {target_quotation_name} from {source_supplier_quotation_name}")
 
     try:
         # Load the target Quotation (the document to be updated)
@@ -99,7 +89,5 @@ def update_quotation_linked(doc, q):
 
     # Save the document
     target_doc.save(ignore_permissions=True)
-    frappe.log_error(
-        f"[supplier_quotation.py] update_quotation_linked: Updated {target_quotation_name} with {len(source_doc.items)} items")
 
     return target_doc
