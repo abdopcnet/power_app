@@ -131,6 +131,7 @@
   ],
   "custom_perms": [],
   "doctype": "Material Request",
+  "links": [],
   "property_setters": [],
   "sync_on_migrate": 1
 }
