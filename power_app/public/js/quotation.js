@@ -59,6 +59,8 @@ frappe.ui.form.on('Quotation', {
 		add_compare_supplier_quotations_button(frm);
 		add_select_items_from_supplier_quotations_button(frm);
 		frm.trigger('set_item_query');
+		// Update total expenses when form is refreshed
+		update_total_expenses(frm);
 		// Set query for a Link field in the child table named 'items' for a service new featur on the quotation doctype
 	},
 	set_item_query: function (frm) {
@@ -88,11 +90,37 @@ frappe.ui.form.on('Quotation', {
 	custom_services: function (frm) {
 		frm.trigger('set_item_query');
 	},
+	custom_item_margin: function (frm) {
+		// Live update when margin changes
+		if (frm.doc.docstatus === 0) {
+			trigger_expense_recalculation(frm);
+		}
+	},
 });
 
 // Handle Service Expense table changes - Update rates immediately (without saving)
 let expense_update_timeout = null;
 let is_recalculating = false;
+
+/**
+ * Calculate and update total expenses in custom_total_expenses field
+ */
+function update_total_expenses(frm) {
+	if (
+		!frm.doc.custom_service_expense_table ||
+		frm.doc.custom_service_expense_table.length === 0
+	) {
+		frm.set_value('custom_total_expenses', 0);
+		return;
+	}
+
+	let total_expenses = 0;
+	frm.doc.custom_service_expense_table.forEach((expense) => {
+		total_expenses += flt(expense.amount) || 0;
+	});
+
+	frm.set_value('custom_total_expenses', total_expenses);
+}
 
 /**
  * Calculate and update item rates based on expenses and margin (client-side, no save)
@@ -115,15 +143,20 @@ function calculate_expense_rates(frm) {
 
 		let original_rate = null;
 
-		// Check if item has supplier quotation
-		if (item.custom_supplier_quotation) {
-			// For client-side, we'll use price_list_rate as fallback
-			// The actual supplier quotation rate should already be in rate/price_list_rate
-			original_rate = flt(item.price_list_rate) || flt(item.rate) || 0;
+		// Step 1: Get original rate
+		// Priority: custom_supplier_quotation_item_rate > price_list_rate > current rate
+		if (
+			item.custom_supplier_quotation_item_rate &&
+			flt(item.custom_supplier_quotation_item_rate) > 0
+		) {
+			// Use custom_supplier_quotation_item_rate if available (saved from Supplier Quotation)
+			original_rate = flt(item.custom_supplier_quotation_item_rate);
+		} else if (flt(item.price_list_rate) > 0) {
+			// Use price_list_rate if available
+			original_rate = flt(item.price_list_rate);
 		} else {
-			// Use price_list_rate if available, otherwise use current rate
-			original_rate =
-				flt(item.price_list_rate) > 0 ? flt(item.price_list_rate) : flt(item.rate) || 0;
+			// Fallback to current rate
+			original_rate = flt(item.rate) || 0;
 		}
 
 		// Store original rate (use name or idx as key)
@@ -132,13 +165,6 @@ function calculate_expense_rates(frm) {
 
 		// Restore original rate temporarily for calculation
 		frappe.model.set_value(item.doctype, item.name, 'rate', original_rate);
-		frappe.model.set_value(item.doctype, item.name, 'net_rate', original_rate);
-
-		// Recalculate amount with original rate
-		const qty = flt(item.qty) || 0;
-		const amount = original_rate * qty;
-		frappe.model.set_value(item.doctype, item.name, 'amount', amount);
-		frappe.model.set_value(item.doctype, item.name, 'net_amount', amount);
 	});
 
 	// Step 2: Calculate total expenses
@@ -151,23 +177,23 @@ function calculate_expense_rates(frm) {
 
 	// Step 3: Calculate total item amount for expense distribution
 	let total_item_amount = 0;
-	let total_net_item_amount = 0;
 	frm.doc.items.forEach((item) => {
-		total_item_amount += flt(item.amount) || 0;
-		total_net_item_amount += flt(item.net_amount) || 0;
+		const qty = flt(item.qty) || 1;
+		const rate = flt(item.rate) || 0;
+		total_item_amount += rate * qty;
 	});
 
 	// Step 4: Distribute expenses to items
-	if (total_item_amount > 0 && total_net_item_amount > 0 && total_expenses > 0) {
+	if (total_item_amount > 0 && total_expenses > 0) {
 		frm.doc.items.forEach((item) => {
 			// Skip if item doesn't have a name (new row not yet saved)
 			if (!item.name) {
 				return;
 			}
 
-			const item_amount = flt(item.amount) || 0;
-			const item_net_amount = flt(item.net_amount) || 0;
 			const qty = flt(item.qty) || 1;
+			const current_rate = flt(item.rate) || 0;
+			const item_amount = current_rate * qty;
 
 			// Calculate expense per unit
 			const expense_per_item = ((item_amount / total_item_amount) * total_expenses) / qty;
@@ -178,19 +204,11 @@ function calculate_expense_rates(frm) {
 			const item_key = item.name || item.idx;
 			const original_rate = item_original_rates[item_key] || 0;
 
-			// Update rate with expense
+			// Update rate with expense (only rate field)
 			const new_rate = flt(original_rate) + expense_per_item;
-			const new_net_rate =
-				flt(item.net_rate) +
-				((item_net_amount / total_net_item_amount) * total_expenses) / qty;
-
-			// Update item fields
 			frappe.model.set_value(item.doctype, item.name, 'rate', new_rate);
-			frappe.model.set_value(item.doctype, item.name, 'net_rate', new_net_rate);
-			frappe.model.set_value(item.doctype, item.name, 'amount', new_rate * qty);
-			frappe.model.set_value(item.doctype, item.name, 'net_amount', new_net_rate * qty);
 
-			// Store expense amount in custom field if it exists
+			// Store expense amount in custom field
 			if (
 				item.meta &&
 				item.meta.has_field &&
@@ -220,7 +238,8 @@ function calculate_expense_rates(frm) {
 		});
 	}
 
-	// Step 5: Apply margin if exists
+	// Step 5: Apply margin if exists (AFTER expenses are added)
+	// Margin is applied on: (Original Rate + Distributed Expenses)
 	if (frm.doc.custom_item_margin && flt(frm.doc.custom_item_margin) !== 0) {
 		const margin_percentage = flt(frm.doc.custom_item_margin);
 
@@ -230,18 +249,16 @@ function calculate_expense_rates(frm) {
 				return;
 			}
 
-			const current_rate = flt(item.rate) || 0;
-			const current_net_rate = flt(item.net_rate) || 0;
-			const qty = flt(item.qty) || 1;
+			// Get current rate (which already includes expenses from Step 4)
+			// This is: Original Rate + Distributed Expenses
+			const rate_after_expenses = flt(item.rate) || 0;
 
-			const margin_amount = (current_rate * margin_percentage) / 100;
-			const new_rate = current_rate + margin_amount;
-			const new_net_rate = current_net_rate + (current_net_rate * margin_percentage) / 100;
+			// Calculate margin amount based on rate AFTER expenses
+			const margin_amount = (rate_after_expenses * margin_percentage) / 100;
+			const final_rate = rate_after_expenses + margin_amount;
 
-			frappe.model.set_value(item.doctype, item.name, 'rate', new_rate);
-			frappe.model.set_value(item.doctype, item.name, 'net_rate', new_net_rate);
-			frappe.model.set_value(item.doctype, item.name, 'amount', new_rate * qty);
-			frappe.model.set_value(item.doctype, item.name, 'net_amount', new_net_rate * qty);
+			// Update only rate field (Original + Expenses + Margin)
+			frappe.model.set_value(item.doctype, item.name, 'rate', final_rate);
 		});
 	}
 
@@ -283,24 +300,65 @@ frappe.ui.form.on('Service Expense', {
 		// When service expense type is selected, trigger recalculation after fetch
 		setTimeout(() => {
 			trigger_expense_recalculation(frm);
+			update_total_expenses(frm);
 		}, 100);
 	},
 	amount: function (frm, cdt, cdn) {
-		// When amount is changed, trigger recalculation
+		// When amount is changed, trigger recalculation and update total
 		trigger_expense_recalculation(frm);
+		update_total_expenses(frm);
+	},
+});
+
+frappe.ui.form.on('Quotation Item', {
+	custom_supplier_quotation: function (frm, cdt, cdn) {
+		// When supplier quotation is selected, fetch and save the rate
+		const item = locals[cdt][cdn];
+		if (item.custom_supplier_quotation && item.item_code) {
+			// Fetch rate from Supplier Quotation Item
+			frappe.call({
+				method: 'frappe.client.get',
+				args: {
+					doctype: 'Supplier Quotation',
+					name: item.custom_supplier_quotation,
+				},
+				callback: function (r) {
+					if (r.message && r.message.items) {
+						// Find the item in Supplier Quotation items
+						const sq_item = r.message.items.find(
+							(sq) => sq.item_code === item.item_code,
+						);
+						if (sq_item && sq_item.rate) {
+							// Save the rate in custom_supplier_quotation_item_rate
+							frappe.model.set_value(
+								cdt,
+								cdn,
+								'custom_supplier_quotation_item_rate',
+								flt(sq_item.rate),
+							);
+						}
+					}
+				},
+			});
+		} else {
+			// Clear the rate if supplier quotation is removed
+			frappe.model.set_value(cdt, cdn, 'custom_supplier_quotation_item_rate', 0);
+		}
 	},
 });
 
 frappe.ui.form.on('Quotation', {
 	custom_service_expense_table_add: function (frm, cdt, cdn) {
-		// When expense row is added, trigger recalculation
+		// When expense row is added, trigger recalculation and update total
 		console.log('[quotation.js] (Expense row added - live update)');
 		trigger_expense_recalculation(frm);
+		update_total_expenses(frm);
 	},
 	custom_service_expense_table_remove: function (frm, cdt, cdn) {
-		// When expense row is removed, trigger recalculation
+		// When expense row is removed, trigger recalculation and update total
 		console.log('[quotation.js] (Expense row removed - live update)');
 		trigger_expense_recalculation(frm);
+		update_total_expenses(frm);
 	},
 });
 
