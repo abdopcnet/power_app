@@ -90,9 +90,169 @@ frappe.ui.form.on('Quotation', {
 	},
 });
 
-// Handle Service Expense table changes - Update rates immediately
+// Handle Service Expense table changes - Update rates immediately (without saving)
 let expense_update_timeout = null;
 let is_recalculating = false;
+
+/**
+ * Calculate and update item rates based on expenses and margin (client-side, no save)
+ * Replicates the logic from quotation_validate in Python
+ */
+function calculate_expense_rates(frm) {
+	if (!frm.doc.items || frm.doc.items.length === 0) {
+		return;
+	}
+
+	// Step 1: Restore original rates before applying expenses
+	// Store original rates for each item
+	const item_original_rates = {};
+
+	frm.doc.items.forEach((item) => {
+		// Skip if item doesn't have a name (new row not yet saved)
+		if (!item.name) {
+			return;
+		}
+
+		let original_rate = null;
+
+		// Check if item has supplier quotation
+		if (item.custom_supplier_quotation) {
+			// For client-side, we'll use price_list_rate as fallback
+			// The actual supplier quotation rate should already be in rate/price_list_rate
+			original_rate = flt(item.price_list_rate) || flt(item.rate) || 0;
+		} else {
+			// Use price_list_rate if available, otherwise use current rate
+			original_rate =
+				flt(item.price_list_rate) > 0 ? flt(item.price_list_rate) : flt(item.rate) || 0;
+		}
+
+		// Store original rate (use name or idx as key)
+		const item_key = item.name || item.idx;
+		item_original_rates[item_key] = original_rate;
+
+		// Restore original rate temporarily for calculation
+		frappe.model.set_value(item.doctype, item.name, 'rate', original_rate);
+		frappe.model.set_value(item.doctype, item.name, 'net_rate', original_rate);
+
+		// Recalculate amount with original rate
+		const qty = flt(item.qty) || 0;
+		const amount = original_rate * qty;
+		frappe.model.set_value(item.doctype, item.name, 'amount', amount);
+		frappe.model.set_value(item.doctype, item.name, 'net_amount', amount);
+	});
+
+	// Step 2: Calculate total expenses
+	let total_expenses = 0;
+	if (frm.doc.custom_service_expense_table && frm.doc.custom_service_expense_table.length > 0) {
+		frm.doc.custom_service_expense_table.forEach((expense) => {
+			total_expenses += flt(expense.amount) || 0;
+		});
+	}
+
+	// Step 3: Calculate total item amount for expense distribution
+	let total_item_amount = 0;
+	let total_net_item_amount = 0;
+	frm.doc.items.forEach((item) => {
+		total_item_amount += flt(item.amount) || 0;
+		total_net_item_amount += flt(item.net_amount) || 0;
+	});
+
+	// Step 4: Distribute expenses to items
+	if (total_item_amount > 0 && total_net_item_amount > 0 && total_expenses > 0) {
+		frm.doc.items.forEach((item) => {
+			// Skip if item doesn't have a name (new row not yet saved)
+			if (!item.name) {
+				return;
+			}
+
+			const item_amount = flt(item.amount) || 0;
+			const item_net_amount = flt(item.net_amount) || 0;
+			const qty = flt(item.qty) || 1;
+
+			// Calculate expense per unit
+			const expense_per_item = ((item_amount / total_item_amount) * total_expenses) / qty;
+			// Calculate total expense amount for this item
+			const expense_amount_for_item = expense_per_item * qty;
+
+			// Get original rate
+			const item_key = item.name || item.idx;
+			const original_rate = item_original_rates[item_key] || 0;
+
+			// Update rate with expense
+			const new_rate = flt(original_rate) + expense_per_item;
+			const new_net_rate =
+				flt(item.net_rate) +
+				((item_net_amount / total_net_item_amount) * total_expenses) / qty;
+
+			// Update item fields
+			frappe.model.set_value(item.doctype, item.name, 'rate', new_rate);
+			frappe.model.set_value(item.doctype, item.name, 'net_rate', new_net_rate);
+			frappe.model.set_value(item.doctype, item.name, 'amount', new_rate * qty);
+			frappe.model.set_value(item.doctype, item.name, 'net_amount', new_net_rate * qty);
+
+			// Store expense amount in custom field if it exists
+			if (
+				item.meta &&
+				item.meta.has_field &&
+				item.meta.has_field('custom_item_expense_amount')
+			) {
+				frappe.model.set_value(
+					item.doctype,
+					item.name,
+					'custom_item_expense_amount',
+					expense_amount_for_item,
+				);
+			}
+		});
+	} else {
+		// If no expenses, reset custom_item_expense_amount to 0
+		frm.doc.items.forEach((item) => {
+			if (!item.name) {
+				return;
+			}
+			if (
+				item.meta &&
+				item.meta.has_field &&
+				item.meta.has_field('custom_item_expense_amount')
+			) {
+				frappe.model.set_value(item.doctype, item.name, 'custom_item_expense_amount', 0);
+			}
+		});
+	}
+
+	// Step 5: Apply margin if exists
+	if (frm.doc.custom_item_margin && flt(frm.doc.custom_item_margin) !== 0) {
+		const margin_percentage = flt(frm.doc.custom_item_margin);
+
+		frm.doc.items.forEach((item) => {
+			// Skip if item doesn't have a name (new row not yet saved)
+			if (!item.name) {
+				return;
+			}
+
+			const current_rate = flt(item.rate) || 0;
+			const current_net_rate = flt(item.net_rate) || 0;
+			const qty = flt(item.qty) || 1;
+
+			const margin_amount = (current_rate * margin_percentage) / 100;
+			const new_rate = current_rate + margin_amount;
+			const new_net_rate = current_net_rate + (current_net_rate * margin_percentage) / 100;
+
+			frappe.model.set_value(item.doctype, item.name, 'rate', new_rate);
+			frappe.model.set_value(item.doctype, item.name, 'net_rate', new_net_rate);
+			frappe.model.set_value(item.doctype, item.name, 'amount', new_rate * qty);
+			frappe.model.set_value(item.doctype, item.name, 'net_amount', new_net_rate * qty);
+		});
+	}
+
+	// Refresh the items field to show updated rates
+	frm.refresh_field('items');
+
+	// Trigger calculate_taxes_and_totals if available
+	if (frm.script_manager && frm.script_manager.trigger_handler) {
+		frm.script_manager.trigger('calculate_taxes_and_totals');
+	}
+}
 
 function trigger_expense_recalculation(frm) {
 	// Skip if already recalculating to avoid recursion
@@ -100,49 +260,47 @@ function trigger_expense_recalculation(frm) {
 		return;
 	}
 
-	// Debounce to avoid multiple saves
+	// Debounce to avoid multiple calculations
 	if (expense_update_timeout) {
 		clearTimeout(expense_update_timeout);
 	}
 
 	expense_update_timeout = setTimeout(() => {
-		if (frm.doc.docstatus === 0 && !frm.is_new()) {
+		if (frm.doc.docstatus === 0) {
 			is_recalculating = true;
-			console.log('[quotation.js] (Recalculating rates after expense change)');
-			// Save silently to trigger validate event
-			frm.save(undefined, undefined, undefined, true)
-				.then(() => {
-					frm.reload_doc();
-					is_recalculating = false;
-				})
-				.catch(() => {
-					is_recalculating = false;
-				});
+			console.log('[quotation.js] (Recalculating rates after expense change - live update)');
+
+			// Calculate and update rates without saving
+			calculate_expense_rates(frm);
+
+			is_recalculating = false;
 		}
-	}, 500); // Wait 500ms after last change
+	}, 300); // Wait 300ms after last change for smoother experience
 }
 
 frappe.ui.form.on('Service Expense', {
+	service_expense_type: function (frm, cdt, cdn) {
+		// When service expense type is selected, trigger recalculation after fetch
+		setTimeout(() => {
+			trigger_expense_recalculation(frm);
+		}, 100);
+	},
 	amount: function (frm, cdt, cdn) {
 		// When amount is changed, trigger recalculation
-		if (frm.doc.docstatus === 0 && !frm.is_new()) {
-			console.log('[quotation.js] (Expense amount changed)');
-			trigger_expense_recalculation(frm);
-		}
+		trigger_expense_recalculation(frm);
 	},
+});
+
+frappe.ui.form.on('Quotation', {
 	custom_service_expense_table_add: function (frm, cdt, cdn) {
 		// When expense row is added, trigger recalculation
-		if (frm.doc.docstatus === 0 && !frm.is_new()) {
-			console.log('[quotation.js] (Expense row added)');
-			trigger_expense_recalculation(frm);
-		}
+		console.log('[quotation.js] (Expense row added - live update)');
+		trigger_expense_recalculation(frm);
 	},
 	custom_service_expense_table_remove: function (frm, cdt, cdn) {
 		// When expense row is removed, trigger recalculation
-		if (frm.doc.docstatus === 0 && !frm.is_new()) {
-			console.log('[quotation.js] (Expense row removed)');
-			trigger_expense_recalculation(frm);
-		}
+		console.log('[quotation.js] (Expense row removed - live update)');
+		trigger_expense_recalculation(frm);
 	},
 });
 
