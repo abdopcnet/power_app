@@ -91,3 +91,14 @@ def update_quotation_linked(doc, q):
     target_doc.save(ignore_permissions=True)
 
     return target_doc
+
+
+def supplier_quotation_before_submit(doc, method):
+    """
+    Document event handler for Supplier Quotation before_submit
+    Allows submitting Supplier Quotation only if custom_approve_rfq_technical_specification is checked
+    """
+    if not hasattr(doc, 'custom_approve_rfq_technical_specification') or not doc.custom_approve_rfq_technical_specification:
+        frappe.throw(
+            _("Waiting Approve RFQ Technical Specification")
+        )
