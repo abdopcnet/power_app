@@ -1,0 +1,39 @@
+{
+ "add_total_row": 0,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2025-12-24 02:48:28.629396",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "json": "{\"columns\":[{\"fieldname\":\"supplier_name\",\"label\":\"Supplier\",\"fieldtype\":\"Link\",\"options\":\"Supplier\",\"width\":150,\"id\":\"supplier_name\",\"name\":\"Supplier\",\"editable\":false,\"compareValue\":null},{\"fieldname\":\"item_code\",\"label\":\"Item\",\"fieldtype\":\"Link\",\"options\":\"Item\",\"width\":150,\"id\":\"item_code\",\"name\":\"Item\",\"editable\":false,\"compareValue\":null},{\"fieldname\":\"uom\",\"label\":\"UOM\",\"fieldtype\":\"Link\",\"options\":\"UOM\",\"width\":90,\"id\":\"uom\",\"name\":\"UOM\",\"editable\":false,\"compareValue\":null},{\"fieldname\":\"qty\",\"label\":\"Quantity\",\"fieldtype\":\"Float\",\"width\":80,\"id\":\"qty\",\"name\":\"Quantity\",\"editable\":false,\"compareValue\":null},{\"fieldname\":\"price\",\"label\":\"Price\",\"fieldtype\":\"Currency\",\"options\":\"currency\",\"width\":110,\"id\":\"price\",\"name\":\"Price\",\"editable\":false,\"compareValue\":null},{\"fieldname\":\"request_for_quotation\",\"label\":\"Request for Quotation\",\"fieldtype\":\"Link\",\"options\":\"Request for Quotation\",\"width\":150,\"id\":\"request_for_quotation\",\"name\":\"Request for Quotation\",\"editable\":false,\"compareValue\":null},{\"fieldname\":\"quotation\",\"label\":\"Supplier Quotation\",\"fieldtype\":\"Link\",\"options\":\"Supplier Quotation\",\"width\":200,\"id\":\"quotation\",\"name\":\"Supplier Quotation\",\"editable\":false,\"compareValue\":null},{\"fieldname\":\"custom_total_expenses\",\"fieldtype\":\"Data\",\"label\":\"Total Expenses\",\"insert_after_index\":6,\"link_field\":{\"fieldname\":\"quotation\",\"names\":{}},\"doctype\":\"Supplier Quotation\",\"width\":100,\"id\":\"custom_total_expenses\",\"name\":\"Total Expenses\",\"editable\":false,\"compareValue\":null},{\"fieldname\":\"valid_till\",\"label\":\"Valid Till\",\"fieldtype\":\"Date\",\"width\":100,\"id\":\"valid_till\",\"name\":\"Valid Till\",\"editable\":false},{\"fieldname\":\"custom_delivery_time\",\"fieldtype\":\"Date\",\"label\":\"Delivery Time\",\"insert_after_index\":11,\"link_field\":{\"fieldname\":\"quotation\",\"names\":{}},\"doctype\":\"Supplier Quotation\",\"width\":100,\"id\":\"custom_delivery_time\",\"name\":\"Delivery Time\",\"editable\":false},{\"fieldname\":\"currency\",\"label\":\"Currency\",\"fieldtype\":\"Link\",\"options\":\"Currency\",\"width\":110,\"id\":\"currency\",\"name\":\"Currency\",\"editable\":false,\"compareValue\":null}],\"filters\":{\"company\":\"power\",\"from_date\":\"2025-11-24\",\"to_date\":\"2025-12-24\",\"supplier\":[],\"supplier_quotation\":[],\"categorize_by\":\"Categorize by Supplier\"}}",
+ "letter_head": null,
+ "modified": "2025-12-24 02:54:00.887033",
+ "modified_by": "Administrator",
+ "module": "Power App",
+ "name": "Supplier_Quotation_Comparison",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "Supplier Quotation",
+ "reference_report": "Supplier Quotation Comparison",
+ "report_name": "Supplier_Quotation_Comparison",
+ "report_type": "Custom Report",
+ "roles": [
+  {
+   "role": "Manufacturing Manager"
+  },
+  {
+   "role": "Purchase Manager"
+  },
+  {
+   "role": "Purchase User"
+  },
+  {
+   "role": "Stock User"
+  }
+ ],
+ "timeout": 0
+}
