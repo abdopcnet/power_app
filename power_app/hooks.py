@@ -155,6 +155,11 @@ doc_events = {
         "on_submit": "power_app.sales_order.create_je_from_service_expence",
         # "on_cancel": "method",
         # "on_trash": "method"
+    },
+    "Supplier Quotation": {
+        "before_submit": "power_app.supplier_quotation.supplier_quotation_before_submit",
+        # "on_cancel": "method",
+        # "on_trash": "method"
     }
 }
 
