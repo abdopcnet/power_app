@@ -1,63 +1,86 @@
 {
-	"actions": [],
-	"allow_rename": 1,
-	"creation": "2025-11-23 06:41:07.492429",
-	"doctype": "DocType",
-	"editable_grid": 1,
-	"engine": "InnoDB",
-	"field_order": ["service_expense_type", "company", "default_account", "amount"],
-	"fields": [
-		{
-			"fieldname": "service_expense_type",
-			"fieldtype": "Link",
-			"in_list_view": 1,
-			"in_preview": 1,
-			"label": "Service Expense Type",
-			"options": "Service Expense Type",
-			"reqd": 1
-		},
-		{
-			"fetch_from": "service_expense_type.default_account",
-			"fieldname": "default_account",
-			"fieldtype": "Link",
-			"label": "Default Account",
-			"options": "Account",
-			"read_only": 1,
-			"reqd": 1
-		},
-		{
-			"fieldname": "amount",
-			"fieldtype": "Currency",
-			"in_list_view": 1,
-			"in_preview": 1,
-			"in_standard_filter": 1,
-			"label": "Amount",
-			"non_negative": 1,
-			"reqd": 1
-		},
-		{
-			"fetch_from": "service_expense_type.company",
-			"fieldname": "company",
-			"fieldtype": "Link",
-			"label": "Company",
-			"options": "Company",
-			"read_only": 1,
-			"reqd": 1
-		}
-	],
-	"grid_page_length": 50,
-	"index_web_pages_for_search": 1,
-	"istable": 1,
-	"links": [],
-	"modified": "2025-12-20 20:33:01.073994",
-	"modified_by": "Administrator",
-	"module": "Power App",
-	"name": "Service Expense",
-	"owner": "Administrator",
-	"permissions": [],
-	"row_format": "Dynamic",
-	"rows_threshold_for_grid_search": 20,
-	"sort_field": "modified",
-	"sort_order": "DESC",
-	"states": []
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-11-23 06:41:07.492429",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "service_expense_type",
+  "company",
+  "default_account",
+  "amount",
+  "description"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "service_expense_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Service Expense Type",
+   "options": "Service Expense Type",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fetch_from": "service_expense_type.default_account",
+   "fieldname": "default_account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Default Account",
+   "options": "Account",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Amount",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fetch_from": "service_expense_type.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fetch_from": "service_expense_type.description",
+   "fetch_if_empty": 1,
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "description"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-12-24 03:14:18.772752",
+ "modified_by": "Administrator",
+ "module": "Power App",
+ "name": "Service Expense",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
 }
