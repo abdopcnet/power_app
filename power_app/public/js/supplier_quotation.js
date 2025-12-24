@@ -29,15 +29,15 @@ frappe.ui.form.on('Supplier Quotation', {
 			fetch_expense_template(frm);
 		} else {
 			// Clear expenses if template is cleared
-			frm.clear_table('custom_service_expense');
-			frm.refresh_field('custom_service_expense');
+			frm.clear_table('custom_service_expense_table');
+			frm.refresh_field('custom_service_expense_table');
 			update_total_expenses(frm);
 		}
 	},
 });
 
 /**
- * Fetch expense template data and populate custom_service_expense child table
+ * Fetch expense template data and populate custom_service_expense_table child table
  */
 function fetch_expense_template(frm) {
 	if (!frm.doc.custom_expense_template) {
@@ -52,11 +52,11 @@ function fetch_expense_template(frm) {
 		callback: function (r) {
 			if (!r.exc && r.message && r.message.length > 0) {
 				// Clear existing expenses
-				frm.clear_table('custom_service_expense');
+				frm.clear_table('custom_service_expense_table');
 
 				// Add expenses from template
 				r.message.forEach(function (expense) {
-					let row = frm.add_child('custom_service_expense');
+					let row = frm.add_child('custom_service_expense_table');
 					row.service_expense_type = expense.service_expense_type;
 					row.company = expense.company;
 					row.default_account = expense.default_account;
@@ -64,7 +64,7 @@ function fetch_expense_template(frm) {
 					row.description = expense.description;
 				});
 
-				frm.refresh_field('custom_service_expense');
+				frm.refresh_field('custom_service_expense_table');
 				update_total_expenses(frm);
 			}
 		},
@@ -81,13 +81,16 @@ function update_total_expenses(frm) {
 		return;
 	}
 
-	if (!frm.doc.custom_service_expense || frm.doc.custom_service_expense.length === 0) {
+	if (
+		!frm.doc.custom_service_expense_table ||
+		frm.doc.custom_service_expense_table.length === 0
+	) {
 		frm.set_value('custom_total_expenses', 0);
 		return;
 	}
 
 	let total_expenses = 0;
-	frm.doc.custom_service_expense.forEach((expense) => {
+	frm.doc.custom_service_expense_table.forEach((expense) => {
 		total_expenses += flt(expense.amount) || 0;
 	});
 
@@ -102,11 +105,11 @@ frappe.ui.form.on('Service Expense', {
 });
 
 frappe.ui.form.on('Supplier Quotation', {
-	custom_service_expense_add: function (frm, cdt, cdn) {
+	custom_service_expense_table_add: function (frm, cdt, cdn) {
 		// When expense row is added, update total (only for draft/new documents)
 		update_total_expenses(frm);
 	},
-	custom_service_expense_remove: function (frm, cdt, cdn) {
+	custom_service_expense_table_remove: function (frm, cdt, cdn) {
 		// When expense row is removed, update total (only for draft/new documents)
 		update_total_expenses(frm);
 	},
