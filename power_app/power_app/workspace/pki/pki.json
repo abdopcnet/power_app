@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"g297XqFOt5\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h1\\\">Customer Quotation Steps</span>\",\"col\":12}},{\"id\":\"1hFrWoLUFd\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Customer Quotation\",\"col\":3}},{\"id\":\"0YA0LE8y9F\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Material Request\",\"col\":3}},{\"id\":\"-v6lZxSISc\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Service Expense Type\",\"col\":3}},{\"id\":\"o7VcJs1gzZ\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h1\\\">Supplier Quotation Steps</span>\",\"col\":12}},{\"id\":\"jtR4U3UM09\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"RFQ From Supplier\",\"col\":3}},{\"id\":\"sBo4Tld_-T\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Supplier Quotation\",\"col\":3}},{\"id\":\"jiZ3c1pdmm\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Supplier Quotation Comparison\",\"col\":3}},{\"id\":\"0uU-Q9N5yq\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h1\\\">Purchase Steps</span>\",\"col\":12}},{\"id\":\"TXGIvcafa_\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Order\",\"col\":3}},{\"id\":\"S4ZILmu_0b\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Receipt\",\"col\":3}},{\"id\":\"dJdk2BZ59E\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Landed Cost Voucher\",\"col\":3}},{\"id\":\"Y7pipvVa5P\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h1\\\">Sales Steps</span>\",\"col\":12}},{\"id\":\"8f1CSUVjYH\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Order\",\"col\":3}},{\"id\":\"IKqBlraJVR\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Delivery Note\",\"col\":3}},{\"id\":\"x-tVco2Fx1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":3}},{\"id\":\"WMHbpXCHYT\",\"type\":\"paragraph\",\"data\":{\"text\":\"<span class=\\\"h2\\\">Reports</span>\",\"col\":12}},{\"id\":\"DhuW_-xEib\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Item Price Stock\",\"col\":3}}]",
+ "content": "[{\"id\":\"g297XqFOt5\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h1\\\">Customer Quotation Steps</span>\",\"col\":12}},{\"id\":\"1hFrWoLUFd\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Customer Quotation\",\"col\":3}},{\"id\":\"0YA0LE8y9F\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Material Request\",\"col\":3}},{\"id\":\"-v6lZxSISc\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Service Expense Type\",\"col\":3}},{\"id\":\"o7VcJs1gzZ\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h1\\\">Supplier Quotation Steps</span>\",\"col\":12}},{\"id\":\"jtR4U3UM09\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"RFQ From Supplier\",\"col\":3}},{\"id\":\"sBo4Tld_-T\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Supplier Quotation\",\"col\":3}},{\"id\":\"jiZ3c1pdmm\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Supplier Quotation Comparison\",\"col\":3}},{\"id\":\"0uU-Q9N5yq\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h1\\\">Purchase Steps</span>\",\"col\":12}},{\"id\":\"TXGIvcafa_\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Order\",\"col\":3}},{\"id\":\"S4ZILmu_0b\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Purchase Receipt\",\"col\":3}},{\"id\":\"dJdk2BZ59E\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Landed Cost Voucher\",\"col\":3}},{\"id\":\"st3YT9bRtb\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Expense Template\",\"col\":3}},{\"id\":\"Y7pipvVa5P\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h1\\\">Sales Steps</span>\",\"col\":12}},{\"id\":\"8f1CSUVjYH\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Order\",\"col\":3}},{\"id\":\"IKqBlraJVR\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Delivery Note\",\"col\":3}},{\"id\":\"x-tVco2Fx1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":3}},{\"id\":\"WMHbpXCHYT\",\"type\":\"paragraph\",\"data\":{\"text\":\"<span class=\\\"h2\\\">Reports</span>\",\"col\":12}},{\"id\":\"DhuW_-xEib\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Item Price Stock\",\"col\":3}}]",
  "creation": "2025-11-12 13:03:58.387324",
  "custom_blocks": [],
  "docstatus": 0,
@@ -13,7 +13,7 @@
  "is_hidden": 0,
  "label": "PKI",
  "links": [],
- "modified": "2025-12-22 16:26:16.672678",
+ "modified": "2025-12-24 03:29:32.704036",
  "modified_by": "Administrator",
  "module": "Power App",
  "name": "PKI",
@@ -25,6 +25,22 @@
  "roles": [],
  "sequence_id": 1.0,
  "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Supplier Quotation Comparison",
+   "link_to": "Supplier_Quotation_Comparison",
+   "report_ref_doctype": "Supplier Quotation",
+   "type": "Report"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Expense Template",
+   "link_to": "Expense Template",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
   {
    "color": "Grey",
    "doc_view": "List",
@@ -120,14 +136,6 @@
    "link_to": "Request for Quotation",
    "stats_filter": "[]",
    "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Supplier Quotation Comparison",
-   "link_to": "Supplier Quotation Comparison",
-   "report_ref_doctype": "Supplier Quotation",
-   "type": "Report"
   }
  ],
  "title": "PKI"
