@@ -25,6 +25,40 @@ def check_quotation_linked(doc):
 
 
 @frappe.whitelist()
+def get_expense_template_data(template_name):
+    """
+    Fetch expense template data and return service expenses
+
+    Args:
+        template_name: Name of the Expense Template
+
+    Returns:
+        List of service expense dictionaries
+    """
+    if not template_name:
+        return []
+
+    try:
+        template = frappe.get_doc("Expense Template", template_name)
+        expenses = []
+
+        if hasattr(template, 'service_expense') and template.service_expense:
+            for expense in template.service_expense:
+                expenses.append({
+                    'service_expense_type': expense.service_expense_type,
+                    'company': expense.company,
+                    'default_account': expense.default_account,
+                    'amount': expense.amount,
+                    'description': expense.description
+                })
+
+        return expenses
+    except frappe.DoesNotExistError:
+        frappe.throw(_("Expense Template {0} not found").format(template_name))
+        return []
+
+
+@frappe.whitelist()
 def update_quotation_linked(doc, q):
     """
     Update Customer Quotation with items and rates from Supplier Quotation
