@@ -92,27 +92,39 @@ def update_quotation_linked(doc, q):
     # Clear existing items in the target Quotation
     target_doc.set("items", [])
 
-    # List of fields to copy from Supplier Quotation Item to Quotation Item
-    item_fields_to_copy = [
-        "item_code", "item_name", "qty", "uom", "rate", "amount",
-        "stock_uom", "description", "brand",
-    ]
-
+    # ============================================
+    # Function 1: Copy items and prices
+    # Fields: item_code, qty, rate, custom_supplier_quotation_item_rate,
+    #        custom_supplier_quotation, margin_type
+    # ============================================
     # Loop through source items and create new rows for the target
     for source_item in source_doc.items:
         new_item = frappe.new_doc(
             "Quotation Item", parent=target_doc, parentfield="items", parenttype="Quotation"
         )
 
-        for field in item_fields_to_copy:
-            if hasattr(source_item, field):
-                new_item.set(field, getattr(source_item, field))
-
-        # Map the Supplier Quotation Item's Base Rate to the Quotation Item's Rate
-        if hasattr(source_item, "base_rate"):
-            new_item.rate = source_item.base_rate
-        else:
+        # Copy required fields: item_code, qty, rate
+        if hasattr(source_item, "item_code"):
+            new_item.item_code = source_item.item_code
+        if hasattr(source_item, "qty"):
+            new_item.qty = source_item.qty
+        if hasattr(source_item, "rate"):
             new_item.rate = source_item.rate
+        elif hasattr(source_item, "base_rate"):
+            new_item.rate = source_item.base_rate
+
+        # Copy custom fields: custom_supplier_quotation_item_rate, custom_supplier_quotation
+        if hasattr(source_item, "custom_supplier_quotation_item_rate"):
+            new_item.custom_supplier_quotation_item_rate = source_item.custom_supplier_quotation_item_rate
+        if hasattr(source_item, "custom_supplier_quotation"):
+            new_item.custom_supplier_quotation = source_item.custom_supplier_quotation
+        else:
+            # If custom_supplier_quotation doesn't exist in source item, set it to the Supplier Quotation name
+            new_item.custom_supplier_quotation = source_supplier_quotation_name
+
+        # Copy margin_type if it exists in source
+        if hasattr(source_item, "margin_type"):
+            new_item.margin_type = source_item.margin_type
 
         # Set the parent link fields before appending
         new_item.parent = target_doc.name
@@ -120,6 +132,29 @@ def update_quotation_linked(doc, q):
         new_item.parentfield = "items"
 
         target_doc.append("items", new_item)
+
+    # ============================================
+    # Function 2: Copy expenses table
+    # Copy custom_service_expense_table from Supplier Quotation to Quotation
+    # ============================================
+    if hasattr(source_doc, 'custom_service_expense_table') and source_doc.custom_service_expense_table:
+        # Clear existing expenses in target Quotation
+        if hasattr(target_doc, 'custom_service_expense_table'):
+            target_doc.set('custom_service_expense_table', [])
+
+        # Copy expenses from Supplier Quotation to Quotation
+        for expense in source_doc.custom_service_expense_table:
+            target_doc.append('custom_service_expense_table', {
+                'service_expense_type': expense.service_expense_type,
+                'company': expense.company,
+                'default_account': expense.default_account,
+                'amount': expense.amount,
+                'description': expense.description
+            })
+
+    # Copy custom_expense_template from Supplier Quotation to Quotation
+    if hasattr(source_doc, 'custom_expense_template') and source_doc.custom_expense_template:
+        target_doc.custom_expense_template = source_doc.custom_expense_template
 
     # Save the document
     target_doc.save(ignore_permissions=True)
